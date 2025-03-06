@@ -1,0 +1,22 @@
+[cpu]
+name = "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
+curve = [171.2,0.0354,36.89,-10.13]
+
+[[process]]
+name = "fights"
+up = "./up.sh"
+down = "docker compose -f deploy/docker-compose/java21.yml down"
+redirect.to = "file"
+process.type = "docker"
+process.containers = ["fights-db","heroes-db","villains-db","locations-db","fights-kafka","event-statistics-java21","rest-fights-java21","rest-heroes","rest-villains","grpc-locations-java21","rest-narration-java21", "apicurio","ui-super-heroes"]
+
+[[scenario]]
+name = "k6"
+desc = "Sleeps for 10 seconds, a real scenario would call your app"
+command = "k6 run k6_example.js"
+iterations = 1
+processes = ["fights"]
+
+[[observation]]
+name = "my_observation"
+scenarios = ["k6"]

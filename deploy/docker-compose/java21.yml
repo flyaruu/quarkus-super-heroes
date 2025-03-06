@@ -255,3 +255,8 @@ services:
     restart: on-failure
     environment:
       API_BASE_URL: http://localhost:8082
+
+  # ubuntu:
+  #   image: ubuntu
+  #   stdin_open: true # docker run -i
+  #   tty: true
