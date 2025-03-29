@@ -1,6 +1,10 @@
+#[cpu]
+#name = "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
+#curve = [171.2,0.0354,36.89,-10.13]
 [cpu]
-name = "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
-curve = [171.2,0.0354,36.89,-10.13]
+name = "Apple M4 Pro"
+curve = [30.508760345993128,0.0730308567638932,20.451103066868207,-5.08379885619235]
+
 
 [[process]]
 name = "fights-native"
@@ -8,7 +12,7 @@ up = "docker compose -f deploy/docker-compose/native.yml up --force-recreate -d"
 down = "docker compose -f deploy/docker-compose/native.yml down"
 redirect.to = "file"
 process.type = "docker"
-process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db", "fights-kafka", "event-statistics-native", "rest-fights-native", "rest-heroes", "rest-villains", "grpc-locations-native", "rest-narration-native", "apicurio", "ui-super-heroes"]
+process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db","rest-fights-java21", "rest-heroes", "rest-villains", "grpc-locations-java21"]
 startup_grace = "20s"
 
 [[process]]
@@ -17,21 +21,21 @@ up = "docker compose -f deploy/docker-compose/java21.yml up --force-recreate -d"
 down = "docker compose -f deploy/docker-compose/java21.yml down"
 redirect.to = "file"
 process.type = "docker"
-process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db", "fights-kafka", "event-statistics-java21", "rest-fights-java21", "rest-heroes", "rest-villains", "grpc-locations-java21", "rest-narration-java21", "apicurio", "ui-super-heroes"]
+process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db","rest-fights-java21", "rest-heroes", "rest-villains", "grpc-locations-java21"]
 startup_grace = "20s"
 
 [[scenario]]
 name = "k6-native"
 desc = "Load test for 60s"
 command = "k6 run k6.js"
-iterations = 2
+iterations = 3
 processes = ["fights-native"]
 
 [[scenario]]
 name = "k6-java"
 desc = "Load test for 60s"
 command = "k6 run k6.js"
-iterations = 5
+iterations = 3
 processes = ["fights-java"]
 
 [[observation]]

@@ -1,16 +1,48 @@
 import http from 'k6/http';
+import { check } from 'k6';
 
 export const options = {
-    vus: 50,
-    iterations: 10000
+    vus: 100,
+    iterations: 100000
 };
 
 export default() => {
-    var response_body = JSON.parse(http.get("http://localhost:8082/api/fights/randomfighters").body);
+    const json_post_header = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+    };
+    var response = http.get("http://localhost:8082/api/fights/randomfighters");
+    check(response, {
+        'random fighters status is 200': (r) => r.status === 200,
+      });
+    var response_body = JSON.parse(response.body);
+
     var hero = response_body.hero;
     var villain = response_body.villain;
-    var location = JSON.parse(http.get("http://localhost:8082/api/fights/randomlocation").body);
+    check(location, {
+        'hero is not fallback': (r) => !hero.name.toLowerCase().includes("fallback"),
+        'villain is not fallback': (r) => !villain.name.toLowerCase().includes("fallback")
+    })
+
+    var location_response = http.get("http://localhost:8082/api/fights/randomlocation");
+    check(response, {
+        'location status is 200': (r) => r.status === 200,
+      });
+    var location = JSON.parse(location_response.body);
+    check(location, {
+        'location is not fallback': (r) => !location.name.toLowerCase().includes("fallback")
+    })
     var fight_request = { hero: hero, villain: villain, location: location};
-    var fight_result = JSON.parse(http.post("http://localhost:8082/api/fights", JSON.stringify(fight_request)).body);
+    var fight_response = http.post("http://localhost:8082/api/fights", JSON.stringify(fight_request), json_post_header);
+    // console.log(fight_response);
+    check( fight_response, {
+      'fight result is 200': (r) => r.status === 200
+    })
+    var fight_result = JSON.parse(fight_response.body);
+    // console.log("===============");
+
+    // console.log(fight_result);
+
     console.log(fight_result.winnerName);
 }
