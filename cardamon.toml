@@ -13,7 +13,7 @@ down = "docker compose -f deploy/docker-compose/native.yml down"
 redirect.to = "file"
 process.type = "docker"
 process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db","rest-fights-java21", "rest-heroes", "rest-villains", "grpc-locations-java21"]
-startup_grace = "20s"
+startup_grace = "60s"
 
 [[process]]
 name = "fights-java"
@@ -22,80 +22,99 @@ down = "docker compose -f deploy/docker-compose/java21.yml down"
 redirect.to = "file"
 process.type = "docker"
 process.containers = ["fights-db", "heroes-db", "villains-db", "locations-db","rest-fights-java21", "rest-heroes", "rest-villains", "grpc-locations-java21"]
-startup_grace = "20s"
+startup_grace = "60s"
 
 [[scenario]]
-name = "k6-native-low"
-desc = "Load test for 60s"
-command = "k6 run low.js"
+name = "quarkus-native-100"
+desc = "Load test for 100rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=100 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_100.json"
 iterations = 3
 processes = ["fights-native"]
 
 [[scenario]]
-name = "k6-native-high"
-desc = "Load test for 60s"
-command = "k6 run high.js"
+name = "quarkus-native-75"
+desc = "Load test for 75rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=75 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_75.json"
 iterations = 3
 processes = ["fights-native"]
 
 [[scenario]]
-name = "k6-native-none"
-desc = "Load test for 60s"
-command = "k6 run none.js"
+name = "quarkus-native-50"
+desc = "Load test for 50rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=50 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_50.json"
 iterations = 3
 processes = ["fights-native"]
 
 [[scenario]]
-name = "k6-native-max"
-desc = "No load test."
-command = "k6 run k6.js"
+name = "quarkus-native-10"
+desc = "Load test for 10rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=10 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_10.json"
 iterations = 3
 processes = ["fights-native"]
 
 [[scenario]]
-name = "k6-java-low"
-desc = "Load test for 60s"
-command = "k6 run low.js"
+name = "quarkus-native-1"
+desc = "Load test for 1rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=1 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_1.json"
+iterations = 3
+processes = ["fights-native"]
+
+[[scenario]]
+name = "quarkus-java-100"
+desc = "Load test for 100rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=100 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_100.json"
 iterations = 3
 processes = ["fights-java"]
 
 [[scenario]]
-name = "k6-java-high"
-desc = "Load test for 60s"
-command = "k6 run high.js"
+name = "quarkus-java-75"
+desc = "Load test for 75rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=75 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_75.json"
 iterations = 3
 processes = ["fights-java"]
 
 [[scenario]]
-name = "k6-java-none"
-desc = "Load test for 60s"
-command = "k6 run none.js"
+name = "quarkus-java-50"
+desc = "Load test for 50rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=50 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_50.json"
 iterations = 3
 processes = ["fights-java"]
 
 [[scenario]]
-name = "k6-java-max"
-desc = "No load test."
-command = "k6 run k6.js"
+name = "quarkus-java-50"
+desc = "Load test for 50rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=50 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_50.json"
 iterations = 3
 processes = ["fights-java"]
+
+[[scenario]]
+name = "quarkus-java-10"
+desc = "Load test for 10rps"
+command = "k6 run --log-output stdout -e RAMPING_RATE=10 -e K6_HOST=http://localhost:8082  k6/load.js --summary-export perf_data/k6_10.json"
+iterations = 3
+processes = ["fights-java"]
+
 
 [[observation]]
 name = "native"
-scenarios = ["k6-native-low","k6-native-high","k6-native-none"]
+scenarios = ["quarkus-native-100"]
+#scenarios = ["k6-native-low","k6-native-high","k6-native-none"]
 
+
+# [[observation]]
+# name = "java"
+# scenarios = ["k6-java-low", "k6-java-high", "k6-java-none"]
+
+
+# [[observation]]
+# name = "java-max"
+# scenarios = ["k6-java-max"]
+
+
+# [[observation]]
+# name = "native-max"
+# scenarios = ["k6-native-max"]
 
 [[observation]]
 name = "java"
-scenarios = ["k6-java-low", "k6-java-high", "k6-java-none"]
-
-
-[[observation]]
-name = "java-max"
-scenarios = ["k6-java-max"]
-
-
-[[observation]]
-name = "native-max"
-scenarios = ["k6-native-max"]
-
+scenarios = ["quarkus-java-100", "quarkus-java-75"]
