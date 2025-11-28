@@ -20,11 +20,11 @@ quarkus:
         traces:
           endpoint: http://localhost:4317
   hibernate-orm:
-    database:
-      generation: drop-and-create
+    schema-management:
+      strategy: drop-and-create
   http:
     cors:
-      ~: true
+      enabled: true
       origins: "*"
     port: 8083
     test-port: 0

@@ -55,7 +55,7 @@ jobs:
           echo "ref = ${{ needs.calculate-refs.outputs.ref }}"
           echo "branch = ${{ needs.calculate-refs.outputs.branch }}"
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.calculate-refs.outputs.branch }}
@@ -83,13 +83,13 @@ jobs:
     outputs:
       projects_matrix: ${{ steps.calculate_projects.outputs.projects_matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ needs.check-commit-count.outputs.branch }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 21
           distribution: temurin
@@ -97,9 +97,15 @@ jobs:
       - name: Calculate projects
         id: calculate_projects
         run: |
-          json=$(curl -Ls https://sh.jbang.dev | bash -s - .github/calculateModules.java "${{ env.DEFAULT_TIMEFRAME }}")
-          echo "modules = ${json}"
-          echo "projects_matrix=${json}" >> $GITHUB_OUTPUT
+          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+            json=$(curl -Ls https://sh.jbang.dev | bash -s - .github/calculateModules.java "${{ needs.check-commit-count.outputs.timeframe }}")
+            echo "modules = ${json}"
+            echo "projects_matrix=${json}" >> $GITHUB_OUTPUT
+          else
+            json='[{ "name": "event-statistics" },{ "name": "grpc-locations" },{ "name": "rest-fights" },{ "name": "rest-heroes" },{ "name": "rest-villains" },{ "name": "ui-super-heroes" },{ "name": "rest-narration" },{ "name": "rest-narration", "openai-type": "azure-openai" }]'
+            echo "modules = ${json}"
+            echo "projects_matrix=${json}" >> $GITHUB_OUTPUT
+          fi
 
   build-jvm-images:
     needs:
@@ -118,12 +124,12 @@ jobs:
     name: "Build JVM images (${{ matrix.arch }}-${{ matrix.project.name }}-java${{ matrix.java }}-${{ matrix.project.openai-type }})"
     steps:
       - name: Checkout from ${{ needs.check-commit-count.outputs.ref }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.check-commit-count.outputs.ref }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: temurin
@@ -193,12 +199,12 @@ jobs:
     name: "Build Native images (${{ matrix.arch }}-${{ matrix.project.name }}-java${{ matrix.java.jvm }}-${{ matrix.project.openai-type }})"
     steps:
       - name: Checkout from ${{ needs.check-commit-count.outputs.ref }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.check-commit-count.outputs.ref }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java.jvm }}
           distribution: temurin
@@ -265,7 +271,7 @@ jobs:
     name: "Push app images (${{ matrix.arch }}-${{ matrix.project.name }}-${{ matrix.kind }}java${{ matrix.java }}-${{ matrix.project.openai-type }})"
     steps:
       - name: Checkout from ${{ needs.check-commit-count.outputs.ref }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.check-commit-count.outputs.ref }}
 
@@ -274,7 +280,7 @@ jobs:
         run: echo "CONTAINER_TAG=$(./compute-container-tag.sh "${{ matrix.kind }}" ${{ matrix.java }} ${{ env.LATEST_IMAGE_TAG }} ${{ needs.check-commit-count.outputs.branch }} "${{ matrix.project.openai-type }}")" >> $GITHUB_ENV
 
       - name: Get saved images (${{ matrix.project.name }}:${{ env.CONTAINER_TAG }}-${{ matrix.arch }})
-        uses: ishworkh/container-image-artifact-download@v2.0.0
+        uses: ishworkh/container-image-artifact-download@v2.1.0
         with:
           image: "${{ env.IMAGE_BASE_NAME }}/${{ matrix.project.name }}:${{ env.CONTAINER_TAG }}-${{ matrix.arch }}"
 
@@ -307,7 +313,7 @@ jobs:
     name: Create app multiarch manifests (${{ matrix.project.name }}-${{ matrix.kind }}java${{ matrix.java }}-${{ matrix.project.openai-type }})
     steps:
       - name: Checkout from ${{ needs.check-commit-count.outputs.ref }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.check-commit-count.outputs.ref }}
 

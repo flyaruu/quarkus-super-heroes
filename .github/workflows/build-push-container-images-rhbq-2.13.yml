@@ -53,12 +53,12 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Checkout from ${{ env.REF }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.REF }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: temurin
@@ -135,12 +135,12 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Checkout from ${{ env.REF }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.REF }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ env.NATIVE_JAVA_VERSION }}
           distribution: temurin
@@ -190,7 +190,7 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Checkout from ${{ env.REF }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.REF }}
 
@@ -205,7 +205,7 @@ jobs:
           install: true
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: temurin
@@ -284,12 +284,12 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Checkout from ${{ env.REF }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.REF }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: temurin
@@ -322,7 +322,7 @@ jobs:
         run: echo "ADDITIONAL_TAG=${{ matrix.kind }}${{ env.LATEST_IMAGE_TAG }}-${{ env.BRANCH }}" >> $GITHUB_ENV
 
       - name: Get saved images (${{ matrix.project }}:${{ env.CONTAINER_TAG }}-${{ matrix.arch }})
-        uses: ishworkh/container-image-artifact-download@v2.0.0
+        uses: ishworkh/container-image-artifact-download@v2.1.0
         with:
           image: "${{ env.IMAGE_BASE_NAME }}/${{ matrix.project }}:${{ env.CONTAINER_TAG }}-${{ matrix.arch }}"
 
@@ -380,12 +380,12 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Checkout from ${{ env.REF }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.REF }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: temurin

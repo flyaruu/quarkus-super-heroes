@@ -8,18 +8,19 @@
   <name>Quarkus Sample :: Super-Heroes :: Statistics Microservice</name>
   <description>The event statistics microservice utilizing WebSockets</description>
   <properties>
-    <assertj.version>3.27.3</assertj.version>
+    <assertj.version>3.27.6</assertj.version>
     <awaitility.version>4.1.1</awaitility.version>
-    <compiler-plugin.version>3.14.0</compiler-plugin.version>
+    <compiler-plugin.version>3.14.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.release>21</maven.compiler.release>
-    <jacoco.version>0.8.12</jacoco.version>
+    <jacoco.version>0.8.14</jacoco.version>
+    <junit5.tree.reporter.version>1.5.1</junit5.tree.reporter.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.19.1</quarkus.platform.version>
-    <surefire-plugin.version>3.5.2</surefire-plugin.version>
+    <quarkus.platform.version>3.30.1</quarkus.platform.version>
+    <surefire-plugin.version>3.5.4</surefire-plugin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -162,16 +163,41 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>${junit5.tree.reporter.version}</version>
+          </dependency>
+        </dependencies>
         <configuration>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
           </systemPropertyVariables>
+          <reportFormat>plain</reportFormat>
+          <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+            <printStacktraceOnError>true</printStacktraceOnError>
+            <printStacktraceOnFailure>true</printStacktraceOnFailure>
+            <printStdoutOnError>true</printStdoutOnError>
+            <printStdoutOnFailure>true</printStdoutOnFailure>
+            <printStdoutOnSuccess>false</printStdoutOnSuccess>
+            <printStderrOnError>true</printStderrOnError>
+            <printStderrOnFailure>true</printStderrOnFailure>
+            <printStderrOnSuccess>false</printStderrOnSuccess>
+          </statelessTestsetInfoReporter>
         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>${junit5.tree.reporter.version}</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
@@ -185,6 +211,17 @@
                 <maven.home>${maven.home}</maven.home>
                 <quarkus.test.arg-line>${argLine}</quarkus.test.arg-line>
               </systemPropertyVariables>
+              <reportFormat>plain</reportFormat>
+              <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+                <printStacktraceOnError>true</printStacktraceOnError>
+                <printStacktraceOnFailure>true</printStacktraceOnFailure>
+                <printStdoutOnError>true</printStdoutOnError>
+                <printStdoutOnFailure>true</printStdoutOnFailure>
+                <printStdoutOnSuccess>false</printStdoutOnSuccess>
+                <printStderrOnError>true</printStderrOnError>
+                <printStderrOnFailure>true</printStderrOnFailure>
+                <printStderrOnSuccess>false</printStderrOnSuccess>
+              </statelessTestsetInfoReporter>
             </configuration>
           </execution>
         </executions>
