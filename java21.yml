@@ -19,7 +19,6 @@ services:
           memory: 42M
   fights-db:
     image: mongo:7.0
-    container_name: fights-db
     ports:
       - "27017"
     environment:
@@ -27,11 +26,10 @@ services:
       MONGO_INITDB_ROOT_USERNAME: super
       MONGO_INITDB_ROOT_PASSWORD: super
     volumes:
-      - ../../rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
+      - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
   apicurio:
     image: quay.io/apicurio/apicurio-registry-mem:2.6.5.Final
-    container_name: apicurio
     ports:
       - "8086:8086"
     environment:
@@ -40,22 +38,21 @@ services:
 
   fights-kafka:
     image: quay.io/strimzi/kafka:0.43.0-kafka-3.8.0
-    container_name: fights-kafka
     depends_on:
       - apicurio
     command:
       - "sh"
       - "-c"
-      - "export CLUSTER_ID=$$(bin/kafka-storage.sh random-uuid) && bin/kafka-storage.sh format -t $${CLUSTER_ID} -c config/kraft/server.properties && bin/kafka-server-start.sh config/kraft/server.properties --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS}"
+      - "export CLUSTER_ID=$(bin/kafka-storage.sh random-uuid) && bin/kafka-storage.sh format -t ${CLUSTER_ID} -c config/kraft/server.properties && bin/kafka-server-start.sh config/kraft/server.properties --override advertised.listeners=${KAFKA_ADVERTISED_LISTENERS}"
+
     ports:
       - "9092:9092"
     environment:
       LOG_DIR: /tmp/logs
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fights-kafka:9092
 
-  rest-fights-java21:
+  rest-fights:
     image: quay.io/quarkus-super-heroes/rest-fights:java21-latest
-    container_name: rest-fights-java21
     depends_on:
       - fights-db
       - apicurio
@@ -76,10 +73,6 @@ services:
       MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-fights
     deploy:
       resources:
         limits:
@@ -88,7 +81,6 @@ services:
 
   villains-db:
     image: postgres:16
-    container_name: villains-db
     ports:
       - "5432"
     environment:
@@ -96,11 +88,10 @@ services:
       POSTGRES_PASSWORD: superbad
       POSTGRES_DB: villains_database
     volumes:
-      - ../../rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   heroes-db:
     image: postgres:16
-    container_name: heroes-db
     ports:
       - "5432"
     environment:
@@ -108,11 +99,10 @@ services:
       POSTGRES_PASSWORD: superman
       POSTGRES_DB: heroes_database
     volumes:
-      - ../../rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   locations-db:
     image: mariadb:11.5
-    container_name: locations-db
     ports:
       - "3306"
     environment:
@@ -122,11 +112,10 @@ services:
       MARIADB_ROOT_PASSWORD: locations
       MARIADB_SKIP_TEST_DB: yes
     volumes:
-      - ../../grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
-  rest-villains-java21:
+  rest-villains:
     image: quay.io/quarkus-super-heroes/rest-villains:java21-latest
-    container_name: rest-villains-java21
     depends_on:
       - villains-db
     ports:
@@ -139,19 +128,14 @@ services:
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-villains
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  rest-heroes-java21:
+  rest-heroes:
     image: quay.io/quarkus-super-heroes/rest-heroes:java21-latest
-    container_name: rest-heroes-java21
     depends_on:
       - heroes-db
     ports:
@@ -164,37 +148,27 @@ services:
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-heroes
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  rest-narration-java21:
+  rest-narration:
     image: quay.io/quarkus-super-heroes/rest-narration:java21-latest
-    container_name: rest-narration-java21
     ports:
       - "8087:8087"
     environment:
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-narration
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  grpc-locations-java21:
+  grpc-locations:
     image: quay.io/quarkus-super-heroes/grpc-locations:java21-latest
-    container_name: grpc-locations-java21
     depends_on:
       - locations-db
     ports:
@@ -207,17 +181,13 @@ services:
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - grpc-locations
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  event-statistics-java21:
+  event-statistics:
     image: quay.io/quarkus-super-heroes/event-statistics:java21-latest
     container_name: event-statistics-java21
     depends_on:
@@ -230,19 +200,14 @@ services:
       MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - event-statistics
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  ui-super-heroes-java21:
+  ui-super-heroes:
     image: quay.io/quarkus-super-heroes/ui-super-heroes:java21-latest
-    container_name: ui-super-heroes
     ports:
       - "8080:8080"
     restart: on-failure
