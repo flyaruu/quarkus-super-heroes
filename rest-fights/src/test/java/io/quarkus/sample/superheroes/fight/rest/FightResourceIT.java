@@ -14,14 +14,10 @@ import static org.wiremock.grpc.dsl.WireMockGrpc.*;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +34,6 @@ import io.quarkus.logging.Log;
 import io.quarkus.test.common.WithTestResource;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import io.quarkus.test.kafka.InjectKafkaCompanion;
-import io.quarkus.test.kafka.KafkaCompanionResource;
 
 import io.quarkus.sample.superheroes.fight.Fight;
 import io.quarkus.sample.superheroes.fight.FightImage;
@@ -67,13 +61,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import io.apicurio.registry.serde.avro.AvroKafkaDeserializer;
-import io.apicurio.registry.serde.avro.AvroKafkaSerializer;
-import io.apicurio.registry.serde.avro.AvroSerdeConfig;
-import io.apicurio.registry.serde.avro.ReflectAvroDatumProvider;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
-import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 
 /**
  * Integration tests for the application as a whole. Orders tests in an order to faciliate a scenario of interactions
@@ -83,17 +72,12 @@ import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
  * <p>
  *   Uses Wiremock gRPC to stub responses and verify interactions with the location service
  * </p>
- * <p>
- *   Uses an external container image for Kafka
- * </p>
  * @see HeroesVillainsNarrationWiremockServerResource
  * @see LocationsWiremockGrpcServerResource
- * @see KafkaCompanionResource
  */
 @QuarkusIntegrationTest
 @TestProfile(ShorterTimeoutsProfile.class)
 @WithTestResource(HeroesVillainsNarrationWiremockServerResource.class)
-@WithTestResource(KafkaCompanionResource.class)
 @WithTestResource(LocationsWiremockGrpcServerResource.class)
 @TestMethodOrder(OrderAnnotation.class)
 class FightResourceIT {
@@ -205,9 +189,6 @@ class FightResourceIT {
   @InjectGrpcWireMock
   WireMockGrpcService wireMockGrpc;
 
-	@InjectKafkaCompanion
-  KafkaCompanion companion;
-
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -219,12 +200,6 @@ class FightResourceIT {
 		// Reset WireMock
 		this.wireMockServer.resetAll();
     this.wireMockGrpc.resetAll();
-
-    // Configure Avro Serde for Fight
-    companion.setCommonClientConfig(Map.of(AvroSerdeConfig.AVRO_DATUM_PROVIDER, ReflectAvroDatumProvider.class.getName()));
-    Serde<io.quarkus.sample.superheroes.fight.schema.Fight> serde = Serdes.serdeFrom(new AvroKafkaSerializer<>(), new AvroKafkaDeserializer<>());
-    serde.configure(companion.getCommonClientConfig(), false);
-    companion.registerSerde(io.quarkus.sample.superheroes.fight.schema.Fight.class, serde);
 	}
 
 	@Test
@@ -1236,12 +1211,6 @@ class FightResourceIT {
 	@Test
 	@Order(DEFAULT_ORDER + 2)
 	void performFightHeroWins() {
-    var fights = companion.consume(io.quarkus.sample.superheroes.fight.schema.Fight.class)
-      .withOffsetReset(OffsetResetStrategy.EARLIEST)
-      .withGroupId("fights")
-      .withAutoCommit()
-      .fromTopics("fights", 1);
-
     var expectedFight = new Fight();
     expectedFight.winnerName = DEFAULT_HERO.name();
     expectedFight.winnerLevel = DEFAULT_HERO.level();
@@ -1277,44 +1246,11 @@ class FightResourceIT {
 				.statusCode(OK.getStatusCode())
 				.contentType(JSON)
 				.body("size()", is(NB_FIGHTS + 1));
-
-    var fight = fights.awaitCompletion(Duration.ofSeconds(10))
-      .getFirstRecord()
-      .value();
-
-		assertThat(fight)
-			.isNotNull()
-			.extracting(
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerName,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerLevel,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerPicture,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerTeam,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserName,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserLevel,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserPicture,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserTeam
-			)
-			.containsExactly(
-				DEFAULT_HERO.name(),
-				DEFAULT_HERO.level(),
-				DEFAULT_HERO.picture(),
-				HEROES_TEAM_NAME,
-				DEFAULT_VILLAIN.name(),
-				DEFAULT_VILLAIN.level(),
-				DEFAULT_VILLAIN.picture(),
-				VILLAINS_TEAM_NAME
-			);
 	}
 
 	@Test
 	@Order(DEFAULT_ORDER + 3)
 	void performFightVillainWins() {
-    var fights = companion.consume(io.quarkus.sample.superheroes.fight.schema.Fight.class)
-      .withOffsetReset(OffsetResetStrategy.EARLIEST)
-      .withGroupId("fights")
-      .withAutoCommit()
-      .fromTopics("fights", 1);
-
     var fightRequest = new FightRequest(
       new Hero(
         DEFAULT_HERO_NAME,
@@ -1366,33 +1302,6 @@ class FightResourceIT {
 				.statusCode(OK.getStatusCode())
 				.contentType(JSON)
 				.body("size()", is(NB_FIGHTS + 2));
-
-    var fight = fights.awaitCompletion(Duration.ofSeconds(10))
-      .getFirstRecord()
-      .value();
-
-    assertThat(fight)
-			.isNotNull()
-			.extracting(
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerName,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerLevel,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerPicture,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getWinnerTeam,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserName,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserLevel,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserPicture,
-        io.quarkus.sample.superheroes.fight.schema.Fight::getLoserTeam
-			)
-			.containsExactly(
-				DEFAULT_VILLAIN.name(),
-				DEFAULT_HERO.level(),
-				DEFAULT_VILLAIN.picture(),
-				VILLAINS_TEAM_NAME,
-				DEFAULT_HERO.name(),
-				DEFAULT_VILLAIN.level(),
-				DEFAULT_HERO.picture(),
-				HEROES_TEAM_NAME
-			);
 	}
 
 	@Test

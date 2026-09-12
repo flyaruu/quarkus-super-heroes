@@ -1,12 +1,9 @@
 @startuml
-!include <logos/kafka>
 !include <logos/postgresql>
 !include <logos/mariadb>
 !include <logos/mongodb>
-!include <logos/react>
 !include <logos/grafana>
 !include <logos/quarkus>
-!include <logos/jquery>
 !include style.puml
 
 skinparam NodePadding 40
@@ -20,12 +17,6 @@ together {
     }
 
     node "OpenTelemetry Collector" as otelCollector {
-    }
-
-    node "Super Hero UI" as ui {
-      agent "<$react>" <<frontend>> as reactUi
-      agent "`<$quarkus>" as uiQuarkus
-      reactUi .up> uiQuarkus
     }
 }
 
@@ -61,21 +52,6 @@ node "Location" as location {
 		locationQuarkus .up> locationMariadb
 }
 
-together {
-  queue "<$kafka>" as kafka {
-  }
-
-  node "Apicurio" <<schema-registry>> as apicurio {
-  }
-}
-
-'package "stats" {
-    node "Event Statistics" as stat {
-        agent "<$quarkus>" <<reactive>><<event-driven>> as statQuarkus
-        agent "<$jquery>" <<html>> as uiStats
-    }
-
-reactUi --> fightQuarkus : HTTP
 fightQuarkus --> narrationQuarkus : HTTP
 fightQuarkus --> villainQuarkus : HTTP
 fightQuarkus --> heroQuarkus : HTTP
@@ -83,18 +59,10 @@ fightQuarkus -[dotted]-> locationQuarkus : gRPC
 
 langchain --> openai : HTTP
 
-fightQuarkus ..> kafka : Message
-fightQuarkus --> apicurio : HTTP
-
-statQuarkus <.. kafka : Message
-statQuarkus --> apicurio : HTTP
-statQuarkus ..> uiStats : WebSocket
-
 otelCollector .> grafana
 otelCollector <-[dotted]- fightQuarkus : http/protobuf
 otelCollector <-[dotted]- heroQuarkus : http/protobuf
 otelCollector <-[dotted]- villainQuarkus : http/protobuf
 otelCollector <-[dotted]- narrationQuarkus : http/protobuf
-otelCollector <-[dotted]- statQuarkus : http/protobuf
 otelCollector <-[dotted]- locationQuarkus : http/protobuf
 @enduml

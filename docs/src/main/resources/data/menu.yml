@@ -17,18 +17,9 @@ items:
   - title: Location gRPC API
     path: /grpc-locations
     icon: fas fa-map-marker-alt
-  - title: Event Statistics
-    path: /event-statistics
-    icon: fas fa-chart-bar
-  - title: Battle UI
-    path: /ui-super-heroes
-    icon: fas fa-desktop
   - title: Running Locally
     path: /running-locally
     icon: fas fa-play
-  - title: Deploying to Kubernetes
-    path: /deploying
-    icon: fas fa-cloud-upload-alt
   - title: CI/CD Automation
     path: /automation
     icon: fas fa-cogs

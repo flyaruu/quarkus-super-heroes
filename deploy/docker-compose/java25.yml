@@ -4,18 +4,7 @@
 #######################################################################
 
 services:
-  k6:
-    build: k6-image
-    environment:
-      K6_HOST: http://rest-fights:8092
-    command: ["bash", "-c", "while true; do sleep 3600; done"]
-    volumes:
-      - ./k6:/k6:ro
-      - ./k6/results:/results
-    deploy:
-      resources:
-        limits:
-          memory: 42M
+
   fights-db:
     image: mongo:8
     container_name: fights-db
@@ -28,47 +17,15 @@ services:
     volumes:
       - ../../rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
-  apicurio:
-    image: quay.io/apicurio/apicurio-registry:3.1.7
-    container_name: apicurio
-    ports:
-      - "8086:8086"
-    environment:
-      REGISTRY_AUTH_ANONYMOUS_READ_ACCESS_ENABLED: "true"
-      QUARKUS_HTTP_PORT: 8086
-
-  fights-kafka:
-    image: apache/kafka-native:4.2.0
-    container_name: fights-kafka
-    depends_on:
-      - apicurio
-    ports:
-      - "9092:9092"
-    environment:
-      LOG_DIR: /tmp/logs
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fights-kafka:9092
-      KAFKA_NODE_ID: "1"
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-
   rest-fights-java25:
     image: quay.io/quarkus-super-heroes/rest-fights:java25-latest
     container_name: rest-fights-java25
     depends_on:
       - fights-db
-      - apicurio
-      - fights-kafka
     ports:
       - "8082:8082"
     environment:
       QUARKUS_MONGODB_HOSTS: fights-db:27017
-      KAFKA_BOOTSTRAP_SERVERS: PLAINTEXT://fights-kafka:9092
       QUARKUS_LIQUIBASE_MONGODB_MIGRATE_AT_START: "false"
       QUARKUS_MONGODB_CREDENTIALS_USERNAME: superfight
       QUARKUS_MONGODB_CREDENTIALS_PASSWORD: superfight
@@ -77,7 +34,6 @@ services:
       QUARKUS_STORK_NARRATION_SERVICE_SERVICE_DISCOVERY_ADDRESS_LIST: rest-narration:8087
       QUARKUS_GRPC_CLIENTS_LOCATIONS_HOST: grpc-locations
       QUARKUS_GRPC_CLIENTS_LOCATIONS_PORT: 8089
-      MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
       QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
     restart: on-failure
     networks:
@@ -89,6 +45,9 @@ services:
         limits:
           memory: 1G
           cpus: '1'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   villains-db:
     image: postgres:18
@@ -152,6 +111,9 @@ services:
         limits:
           memory: 1G
           cpus: '1'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   rest-heroes-java25:
     image: quay.io/quarkus-super-heroes/rest-heroes:java25-latest
@@ -177,6 +139,9 @@ services:
         limits:
           memory: 1G
           cpus: '1'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   rest-narration-java25:
     image: quay.io/quarkus-super-heroes/rest-narration:java25-latest
@@ -195,6 +160,9 @@ services:
         limits:
           memory: 1G
           cpus: '1'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   grpc-locations-java25:
     image: quay.io/quarkus-super-heroes/grpc-locations:java25-latest
@@ -220,35 +188,6 @@ services:
         limits:
           memory: 1G
           cpus: '1'
-
-  event-statistics-java25:
-    image: quay.io/quarkus-super-heroes/event-statistics:java25-latest
-    container_name: event-statistics-java25
-    depends_on:
-      - apicurio
-      - fights-kafka
-    ports:
-      - "8085:8085"
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: PLAINTEXT://fights-kafka:9092
-      MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
-      QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
-    restart: on-failure
-    networks:
-      default:
-        aliases:
-          - event-statistics
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
-
-  ui-super-heroes-java25:
-    image: quay.io/quarkus-super-heroes/ui-super-heroes:java25-latest
-    container_name: ui-super-heroes
-    ports:
-      - "8080:8080"
-    restart: on-failure
-    environment:
-      API_BASE_URL: http://localhost:8082
+        reservations:
+          memory: 256M
+          cpus: '0.5'

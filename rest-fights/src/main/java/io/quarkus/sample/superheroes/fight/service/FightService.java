@@ -15,7 +15,6 @@ import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
-import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.quarkus.logging.Log;
@@ -36,14 +35,12 @@ import io.quarkus.sample.superheroes.fight.client.NarrationClient;
 import io.quarkus.sample.superheroes.fight.client.Villain;
 import io.quarkus.sample.superheroes.fight.client.VillainClient;
 import io.quarkus.sample.superheroes.fight.config.FightConfig;
-import io.quarkus.sample.superheroes.fight.mapping.FightMapper;
 import io.quarkus.sample.superheroes.fight.mapping.ImageGenerationRequestMapper;
 
 import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.smallrye.faulttolerance.api.CircuitBreakerName;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.reactive.messaging.MutinyEmitter;
 
 /**
  * Business logic for the Fight service
@@ -54,21 +51,16 @@ public class FightService {
 	private final VillainClient villainClient;
   private final NarrationClient narrationClient;
 	private final LocationClient locationClient;
-	private final MutinyEmitter<io.quarkus.sample.superheroes.fight.schema.Fight> emitter;
 	private final FightConfig fightConfig;
-  private final FightMapper fightMapper;
   private final ImageGenerationRequestMapper imageGenerationRequestMapper;
 	private final Random random = new Random();
 
-  @SuppressWarnings("java:S107") // Suppressing "Methods should not have too many parameters" for constructor injection
-	public FightService(HeroClient heroClient, VillainClient villainClient, @RestClient NarrationClient narrationClient, LocationClient locationClient, @Channel("fights") MutinyEmitter<io.quarkus.sample.superheroes.fight.schema.Fight> emitter, FightConfig fightConfig, FightMapper fightMapper, ImageGenerationRequestMapper imageGenerationRequestMapper) {
+	public FightService(HeroClient heroClient, VillainClient villainClient, @RestClient NarrationClient narrationClient, LocationClient locationClient, FightConfig fightConfig, ImageGenerationRequestMapper imageGenerationRequestMapper) {
 		this.heroClient = heroClient;
 		this.villainClient = villainClient;
     this.narrationClient = narrationClient;
 		this.locationClient = locationClient;
-		this.emitter = emitter;
 		this.fightConfig = fightConfig;
-    this.fightMapper = fightMapper;
     this.imageGenerationRequestMapper = imageGenerationRequestMapper;
   }
 
@@ -301,8 +293,6 @@ public class FightService {
     Log.debugf("Persisting a fight: %s", fight);
 		return Fight.persist(fight)
       .replaceWith(fight)
-      .map(this.fightMapper::toSchema)
-      .invoke(this.emitter::sendAndForget)
       .replaceWith(fight);
 	}
 

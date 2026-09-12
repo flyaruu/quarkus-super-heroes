@@ -1,5 +1,0 @@
----
-name: rest-fights
-version: 1.0.0
-description: Helm chart for rest-fights
-apiVersion: v2

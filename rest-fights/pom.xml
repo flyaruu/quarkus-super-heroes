@@ -15,7 +15,6 @@
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.release>25</maven.compiler.release>
     <microcks.version>0.5.0</microcks.version>
-    <helm.version>1.4.3</helm.version>
     <jacoco.version>0.8.15</jacoco.version>
     <pact.version>1.6.0</pact.version>
     <pact.writer.overwrite>true</pact.writer.overwrite>
@@ -56,10 +55,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-messaging-kafka</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
     <dependency>
@@ -93,35 +88,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-openshift</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-kubernetes</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-minikube</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.helm</groupId>
-      <artifactId>quarkus-helm</artifactId>
-      <version>${helm.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-apicurio-registry-avro</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.strimzi</groupId>
-      <artifactId>kafka-oauth-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.strimzi</groupId>
-      <artifactId>kafka-oauth-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-mongodb-panache</artifactId>
     </dependency>
     <dependency>
@@ -138,19 +104,11 @@
     </dependency>
     <dependency>
       <groupId>io.smallrye.stork</groupId>
-      <artifactId>stork-service-discovery-kubernetes</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye.stork</groupId>
       <artifactId>stork-service-discovery-eureka</artifactId>
     </dependency>
     <dependency>
       <groupId>io.smallrye.stork</groupId>
       <artifactId>stork-service-discovery-consul</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye.stork</groupId>
-      <artifactId>stork-service-discovery-knative</artifactId>
     </dependency>
     <dependency>
       <groupId>io.smallrye.stork</groupId>
@@ -167,10 +125,6 @@
     <dependency>
       <groupId>io.smallrye.stork</groupId>
       <artifactId>stork-load-balancer-power-of-two-choices</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-kubernetes-client</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -235,16 +189,6 @@
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock-grpc-extension</artifactId>
       <version>${wiremock-grpc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-test-kafka-companion</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -327,10 +271,10 @@
         </dependencies>
         <configuration>
           <systemPropertyVariables>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+<java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
             <pact_do_not_track>true</pact_do_not_track>
-            <pact.writer.overwrite>true</pact.writer.overwrite>
+            <quarkus.otel.sdk.disabled>true</quarkus.otel.sdk.disabled>
           </systemPropertyVariables>
           <reportFormat>plain</reportFormat>
           <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
@@ -367,6 +311,7 @@
                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                 <maven.home>${maven.home}</maven.home>
                 <quarkus.test.arg-line>${quarkus.test.arg-line}</quarkus.test.arg-line>
+                <quarkus.otel.sdk.disabled>true</quarkus.otel.sdk.disabled>
               </systemPropertyVariables>
               <reportFormat>plain</reportFormat>
               <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">

@@ -7,15 +7,12 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.util.List;
 
-import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.InternalServerErrorException;
 
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
@@ -41,24 +38,18 @@ import io.quarkus.sample.superheroes.fight.client.NarrationClient;
 import io.quarkus.sample.superheroes.fight.client.Villain;
 import io.quarkus.sample.superheroes.fight.client.VillainClient;
 import io.quarkus.sample.superheroes.fight.config.FightConfig;
-import io.quarkus.sample.superheroes.fight.mapping.FightMapper;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 
 /**
  * Tests for the service layer ({@link FightService}).
- * <p>
- *   Uses an {@link io.smallrye.reactive.messaging.memory.InMemoryConnector} to represent the Kafka instance.
- * </p>
  */
 @QuarkusTest
 @TestProfile(ShorterTimeoutsProfile.class)
 class FightServiceTests extends FightServiceTestsBase {
-  private static final String FIGHTS_CHANNEL_NAME = "fights";
   private static final String FALLBACK_NARRATION = """
                                                    High above a bustling city, a symbol of hope and justice soared through the sky, while chaos reigned below, with malevolent laughter echoing through the streets.
                                                    With unwavering determination, the figure swiftly descended, effortlessly evading explosive attacks, closing the gap, and delivering a decisive blow that silenced the wicked laughter.
@@ -83,20 +74,7 @@ class FightServiceTests extends FightServiceTestsBase {
   NarrationClient narrationClient;
 
   @Inject
-  @Any
-  InMemoryConnector emitterConnector;
-
-  @Inject
-  FightMapper fightMapper;
-
-  @Inject
   FightConfig fightConfig;
-
-  @BeforeEach
-  void beforeEach() {
-    // Clear the emitter sink between tests
-    this.emitterConnector.sink(FIGHTS_CHANNEL_NAME).clear();
-  }
 
 	@Test
 	void findAllFightsNoneFound() {
@@ -640,15 +618,6 @@ class FightServiceTests extends FightServiceTestsBase {
       .usingRecursiveComparison()
 			.isEqualTo(fightOutcome);
 
-		var emittedMessages = this.emitterConnector.sink(FIGHTS_CHANNEL_NAME).received();
-
-		assertThat(emittedMessages)
-			.isNotNull()
-			.singleElement()
-			.extracting(Message::getPayload)
-      .usingRecursiveComparison()
-			.isEqualTo(this.fightMapper.toSchema(fightOutcome));
-
 		verify(this.fightService).determineWinner(defaultFightRequest);
 		verify(this.fightService).persistFight(argThat(fightMatcher));
 		verify(this.fightService).shouldHeroWin(defaultFightRequest);
@@ -696,15 +665,6 @@ class FightServiceTests extends FightServiceTestsBase {
 			.usingRecursiveComparison()
 			.isEqualTo(fightOutcome);
 
-		var emittedMessages = this.emitterConnector.sink(FIGHTS_CHANNEL_NAME).received();
-
-		assertThat(emittedMessages)
-			.isNotNull()
-			.singleElement()
-			.extracting(Message::getPayload)
-			.usingRecursiveComparison()
-			.isEqualTo(this.fightMapper.toSchema(fightOutcome));
-
 		verify(this.fightService).determineWinner(defaultFightRequest);
 		verify(this.fightService).persistFight(argThat(fightMatcher));
 		verify(this.fightService).shouldVillainWin(defaultFightRequest);
@@ -751,15 +711,6 @@ class FightServiceTests extends FightServiceTestsBase {
 			.isNotNull()
 			.usingRecursiveComparison()
 			.isEqualTo(fightOutcome);
-
-		var emittedMessages = this.emitterConnector.sink(FIGHTS_CHANNEL_NAME).received();
-
-		assertThat(emittedMessages)
-			.isNotNull()
-			.singleElement()
-			.extracting(Message::getPayload)
-			.usingRecursiveComparison()
-			.isEqualTo(this.fightMapper.toSchema(fightOutcome));
 
 		verify(this.fightService).determineWinner(defaultFightRequest);
 		verify(this.fightService).persistFight(argThat(fightMatcher));

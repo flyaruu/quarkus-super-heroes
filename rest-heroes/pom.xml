@@ -15,7 +15,6 @@
     <maven.compiler.release>25</maven.compiler.release>
     <jacoco.version>0.8.15</jacoco.version>
     <junit5.tree.reporter.version>1.5.1</junit5.tree.reporter.version>
-    <helm.version>1.4.3</helm.version>
     <pact.version>1.6.0</pact.version>
     <playwright.version>2.3.8</playwright.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -87,23 +86,6 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-container-image-docker</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-openshift</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-kubernetes</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-minikube</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.helm</groupId>
-      <artifactId>quarkus-helm</artifactId>
-      <version>${helm.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -238,6 +220,7 @@
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
             <pact_do_not_track>true</pact_do_not_track>
+            <quarkus.otel.sdk.disabled>true</quarkus.otel.sdk.disabled>
           </systemPropertyVariables>
           <reportFormat>plain</reportFormat>
           <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
@@ -274,6 +257,7 @@
                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                 <maven.home>${maven.home}</maven.home>
                 <quarkus.test.arg-line>${quarkus.test.arg-line}</quarkus.test.arg-line>
+                <quarkus.otel.sdk.disabled>true</quarkus.otel.sdk.disabled>
               </systemPropertyVariables>
               <reportFormat>plain</reportFormat>
               <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-for project in "event-statistics" "rest-fights" "rest-heroes" "rest-villains" "rest-narration" "grpc-locations" "ui-super-heroes"
+for project in "rest-fights" "rest-heroes" "rest-villains" "rest-narration" "grpc-locations"
 do
   echo "================================="
   echo "Building ${project}..."

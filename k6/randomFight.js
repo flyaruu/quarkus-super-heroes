@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
-const host = __ENV.K6_HOST || "http://localhost:8080"
+const host = __ENV.K6_HOST || "http://localhost:8082"
 
 export function randomFight() {
     const json_post_header = {

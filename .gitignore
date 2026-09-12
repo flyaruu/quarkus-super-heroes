@@ -38,10 +38,6 @@ nb-configuration.xml
 # Local environment
 .env
 .jpb
-**/deploy/k8s/gen
 .quarkus
-**/deploy/helm/**/Chart.lock
-**/deploy/helm/**/charts/*.tgz
 **/node_modules/**
-/ui-super-heroes/src/main/webui/build/
 .mcp.json

@@ -1,5 +1,0 @@
----
-name: rest-narration
-version: 1.0.0
-description: Helm chart for rest-narration
-apiVersion: v2

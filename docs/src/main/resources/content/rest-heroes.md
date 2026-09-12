@@ -86,7 +86,7 @@ Pre-built images for this application can be found at [`quay.io/quarkus-super-he
 
 Pick one of the versions of the application from the table below and execute the appropriate docker compose command from the `quarkus-super-heroes/rest-heroes` directory.
 
-**NOTE:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, kafka, etc). This is fine. Once everything completes startup things will work fine.
+**NOTE:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, etc). This is fine. Once everything completes startup things will work fine.
 
 | Description | Image Tag | Docker Compose Run Command |
 |---|---|---|
@@ -96,62 +96,3 @@ Pick one of the versions of the application from the table below and execute the
 These Docker Compose files are meant for standing up this application and the required database only. If you want to stand up the entire system, follow the instructions in the main project README.
 
 Once started the application will be exposed at `http://localhost:8083`.
-
-## Deploying to Kubernetes
-
-The application can be deployed to Kubernetes using pre-built images or by deploying directly via the Quarkus Kubernetes Extension. Each of these is discussed below.
-
-### Using pre-built images
-
-Pre-built images for this application can be found at [`quay.io/quarkus-super-heroes/rest-heroes`](https://quay.io/repository/quarkus-super-heroes/rest-heroes?tab=tags).
-
-Deployment descriptors for these images are provided in the `deploy/k8s` directory. There are versions for [OpenShift](https://www.openshift.com), [Minikube](https://quarkus.io/guides/deploying-to-kubernetes#deploying-to-minikube), [Kubernetes](https://www.kubernetes.io), and [Knative](https://knative.dev).
-
-**NOTE:** The [Knative](https://knative.dev/docs/) variant can be used on any Knative installation that runs on top of Kubernetes or OpenShift. For OpenShift, you need [OpenShift Serverless](https://docs.openshift.com/serverless/latest/about/about-serverless.html) installed from the OpenShift operator catalog. Using Knative has the benefit that services are scaled down to zero replicas when they are not used.
-
-Pick one of the versions of the application from the table below and deploy the appropriate descriptor from the `deploy/k8s` directory.
-
-| Description | Image Tag | OpenShift Descriptor | Minikube Descriptor | Kubernetes Descriptor | Knative Descriptor |
-|---|---|---|---|---|---|
-| JVM Java 25 | `java25-latest` | `java25-openshift.yml` | `java25-minikube.yml` | `java25-kubernetes.yml` | `java25-knative.yml` |
-| Native | `native-latest` | `native-openshift.yml` | `native-minikube.yml` | `native-kubernetes.yml` | `native-knative.yml` |
-
-The application is exposed outside of the cluster on port `80`.
-
-These are only the descriptors for this application and the required database only. If you want to deploy the entire system, follow the instructions in the main project README.
-
-### Using Helm
-
-Helm charts for this application are provided in the `deploy/helm` directory with separate charts per deployment target.
-
-To deploy using Helm (e.g. JVM Java 25 on Kubernetes):
-
-```shell
-helm install rest-heroes deploy/helm/kubernetes/ -f deploy/helm/kubernetes/values-java25.yaml
-```
-
-For native:
-
-```shell
-helm install rest-heroes deploy/helm/kubernetes/ -f deploy/helm/kubernetes/values-native.yaml
-```
-
-### Deploying directly via Kubernetes Extensions
-
-Following the [deployment section](https://quarkus.io/guides/deploying-to-kubernetes#deployment) of the [Quarkus Kubernetes Extension Guide](https://quarkus.io/guides/deploying-to-kubernetes) (or the [deployment section](https://quarkus.io/guides/deploying-to-openshift#build-and-deployment) of the [Quarkus OpenShift Extension Guide](https://quarkus.io/guides/deploying-to-openshift) if deploying to [OpenShift](https://openshift.com)), you can run one of the following commands to deploy the application and any of its dependencies to your preferred Kubernetes distribution.
-
-**NOTE:** For non-OpenShift or minikube Kubernetes variants, you will most likely need to [push the image to a container registry](https://quarkus.io/guides/container-image#pushing) by adding the `-Dquarkus.container-image.push=true` flag, as well as setting the `quarkus.container-image.registry`, `quarkus.container-image.group`, and/or the `quarkus.container-image.name` properties to different values.
-
-| Target Platform | Java Version | Command |
-|---|:---:|---|
-| Kubernetes | 25 | `./mvnw clean package -Dquarkus.profile=kubernetes -Dquarkus.kubernetes.deploy=true -DskipTests` |
-| OpenShift | 25 | `./mvnw clean package -Dquarkus.profile=openshift -Dquarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000 -Dquarkus.container-image.group=$(oc project -q) -Dquarkus.kubernetes.deploy=true -DskipTests` |
-| Minikube | 25 | `./mvnw clean package -Dquarkus.profile=minikube -Dquarkus.kubernetes.deploy=true -DskipTests` |
-| Knative | 25 | `./mvnw clean package -Dquarkus.profile=knative -Dquarkus.kubernetes.deploy=true -DskipTests` |
-| Knative (on OpenShift) | 25 | `./mvnw clean package -Dquarkus.profile=knative-openshift -Dquarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000 -Dquarkus.container-image.group=$(oc project -q) -Dquarkus.kubernetes.deploy=true -DskipTests` |
-
-You may need to adjust other configuration options as well (see [Quarkus Kubernetes Extension configuration options](https://quarkus.io/guides/deploying-to-kubernetes#configuration-options) and [Quarkus OpenShift Extension configuration options](https://quarkus.io/guides/deploying-to-openshift#configuration-reference)).
-
----
-
-[View source on GitHub](https://github.com/quarkusio/quarkus-super-heroes/tree/main/rest-heroes)

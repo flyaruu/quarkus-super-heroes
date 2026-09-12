@@ -1,6 +1,6 @@
 ---
 title: Fight REST API
-description: A reactive HTTP microservice orchestrating fights between Heroes and Villains, with resilience patterns, service discovery, and Kafka integration.
+description: A reactive HTTP microservice orchestrating fights between Heroes and Villains, with resilience patterns and service discovery.
 layout: page
 content-toc: true
 ---
@@ -12,8 +12,6 @@ This is the Fight REST API microservice. It is a reactive HTTP microservice expo
 Each fight and its corresponding narration is then persisted into a MongoDB database and can be retrieved via the REST API. This service is implemented using [RESTEasy Reactive](https://quarkus.io/guides/resteasy-reactive) with reactive endpoints and [Quarkus MongoDB Reactive with Panache's active record pattern](https://quarkus.io/guides/mongodb-panache#reactive).
 
 This service uses a **contract-first** approach: the REST API interface is generated at build time from the OpenAPI specification (`src/main/resources/openapi/openapi.yml`) using the [Quarkiverse OpenAPI Generator Server extension](https://docs.quarkiverse.io/quarkus-openapi-generator/dev/server.html). The OpenAPI spec is the single source of truth for both the generated JAX-RS interface and the Swagger UI documentation.
-
-Fight messages are also published on an Apache Kafka topic called `fights`. The [event-statistics service]({site.url('/event-statistics')}) listens for these events. Messages are stored in [Apache Avro](https://avro.apache.org/docs/current) format and the fight schema is automatically registered in the [Apicurio Schema Registry](https://www.apicur.io/registry). This all uses [built-in extensions from Quarkus](https://quarkus.io/guides/kafka-schema-registry-avro).
 
 ![rest-fights]({site.image('rest-fights.png')})
 
@@ -93,8 +91,6 @@ You could disable Stork completely for the `HeroRestClient` by setting `quarkus.
 
 In local development mode, as well as when running via Docker Compose, SmallRye Stork is configured using [static list discovery](https://github.com/smallrye/smallrye-stork/blob/main/docs/service-discovery/static-list.md). In this mode, the downstream URLs are statically defined in an address list. In `application.properties`, see the `quarkus.stork.hero-service.service-discovery.address-list`, `quarkus.stork.villain-service.service-discovery.address-list`, and `quarkus.stork.narration-service.service-discovery.address-list` properties.
 
-When [running in Kubernetes](https://quarkus.io/blog/stork-kubernetes-discovery), Stork is configured to use the [Kubernetes Service Discovery](http://smallrye.io/smallrye-stork/1.1.0/kubernetes). In this mode, Stork will read the Kubernetes `Service`s for the [rest-heroes]({site.url('/rest-heroes')}), [rest-villains]({site.url('/rest-villains')}), and [rest-narration]({site.url('/rest-narration')}) services to obtain the instance information. Additionally, the instance information has been configured to refresh every minute. See the `rest-fights-config` ConfigMap in the Kubernetes deployment descriptors. Look for the `quarkus.stork.*` properties within the various `ConfigMap`s.
-
 All of the other Stork service discovery mechanisms ([Consul](http://smallrye.io/smallrye-stork/1.1.0/consul) and [Eureka](http://smallrye.io/smallrye-stork/1.1.0/eureka)) can be used simply by updating the configuration appropriately according to the Stork documentation.
 
 ### Client-Side Load Balancing
@@ -106,8 +102,6 @@ In all cases, the default load balancing algorithm used is [round robin](http://
 This application has a full suite of tests, including an integration test suite.
 
 - The test suite uses [Wiremock](http://wiremock.org/) for [mocking http calls](https://quarkus.io/guides/rest-client-reactive#using-a-mock-http-server-for-tests) to the downstream [Hero]({site.url('/rest-heroes')}), [Villain]({site.url('/rest-villains')}), and [Narration]({site.url('/rest-narration')}) services.
-- The test suite configures the application to use the [in-memory connector](https://smallrye.io/smallrye-reactive-messaging/smallrye-reactive-messaging/3.11/testing/testing.html) from [SmallRye Reactive Messaging](https://smallrye.io/smallrye-reactive-messaging) for verifying interactions with Kafka.
-- The integration test suite uses [Quarkus Dev Services](https://quarkus.io/guides/getting-started-testing#testing-dev-services) to interact with a Kafka instance so messages placed onto the Kafka broker by the application can be verified.
 
 ### Contract testing with Pact
 
@@ -145,13 +139,13 @@ There are some [Hyperfoil benchmarks](https://hyperfoil.io) available for this s
 
 ## Running the Application
 
-First you need to start up all of the downstream services ([Heroes Service]({site.url('/rest-heroes')}), [Villains Service]({site.url('/rest-villains')}), and [Location Service]({site.url('/grpc-locations')}) - the [Narration Service]({site.url('/rest-narration')}) and [Event Statistics Service]({site.url('/event-statistics')}) are optional).
+First you need to start up all of the downstream services ([Heroes Service]({site.url('/rest-heroes')}), [Villains Service]({site.url('/rest-villains')}), and [Location Service]({site.url('/grpc-locations')}) - the [Narration Service]({site.url('/rest-narration')}) is optional).
 
 The application runs on port `8082` (defined by `quarkus.http.port` in `application.properties`).
 
-From the `quarkus-super-heroes/rest-fights` directory, simply run `./mvnw quarkus:dev` to run [Quarkus Dev Mode](https://quarkus.io/guides/maven-tooling#dev-mode), or running `quarkus dev` using the [Quarkus CLI](https://quarkus.io/guides/cli-tooling). The application will be exposed at `http://localhost:8082` and the [Quarkus Dev UI](https://quarkus.io/guides/dev-ui) will be exposed at `http://localhost:8082/q/dev`. [Quarkus Dev Services](https://quarkus.io/guides/dev-services) will ensure the MongoDB instance, an Apache Kafka instance, and an Apicurio Schema Registry are all started and configured.
+From the `quarkus-super-heroes/rest-fights` directory, simply run `./mvnw quarkus:dev` to run [Quarkus Dev Mode](https://quarkus.io/guides/maven-tooling#dev-mode), or running `quarkus dev` using the [Quarkus CLI](https://quarkus.io/guides/cli-tooling). The application will be exposed at `http://localhost:8082` and the [Quarkus Dev UI](https://quarkus.io/guides/dev-ui) will be exposed at `http://localhost:8082/q/dev`. [Quarkus Dev Services](https://quarkus.io/guides/dev-services) will ensure the MongoDB instance is started and configured.
 
-**Note:** Running the application outside of Quarkus Dev Mode requires standing up a MongoDB instance, an Apache Kafka instance, and an Apicurio Schema Registry and binding them to the app.
+**Note:** Running the application outside of Quarkus Dev Mode requires standing up a MongoDB instance and binding it to the app.
 
 Furthermore, since this service also communicates with additional downstream services ([rest-heroes]({site.url('/rest-heroes')}), [rest-villains]({site.url('/rest-villains')}), and [rest-narration]({site.url('/rest-narration')})), those would need to be stood up as well, although this service does have fallbacks in case those other services aren't available.
 
@@ -162,8 +156,6 @@ By default, the application is configured with the following:
 | Database Host            | `QUARKUS_MONGODB_HOSTS`                                       | `quarkus.mongodb.hosts`                                       | `localhost:27021`                         |
 | Database username        | `QUARKUS_MONGODB_CREDENTIALS_USERNAME`                        | `quarkus.mongodb.credentials.username`                        | `superfight`                             |
 | Database password        | `QUARKUS_MONGODB_CREDENTIALS_PASSWORD`                        | `quarkus.mongodb.credentials.password`                        | `superfight`                             |
-| Kafka Bootstrap servers  | `KAFKA_BOOTSTRAP_SERVERS`                                     | `kafka.bootstrap.servers`                                     | `PLAINTEXT://localhost:9092`             |
-| Apicurio Schema Registry | `MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL` | `mp.messaging.connector.smallrye-kafka.apicurio.registry.url` | `http://localhost:8086/apis/registry/v2` |
 | Heroes Service URL       | `QUARKUS_REST_CLIENT_HERO_CLIENT_URL`                         | `quarkus.rest-client.hero-client.url`                         | `stork://hero-service`                   |
 | Villains Service URL     | `FIGHT_VILLAIN_CLIENT_BASE_URL`                               | `fight.villain.client-base-url`                               | `stork://villain-service`                |
 | Narration Service URL    | `QUARKUS_REST_CLIENT_NARRATION_CLIENT_URL`                    | `quarkus.rest-client.narration-client.url`                    | `stork://narration-service`              |
@@ -178,7 +170,7 @@ Pre-built images for this application can be found at [`quay.io/quarkus-super-he
 
 Pick one of the versions of the application from the table below and execute the appropriate docker compose command from the `quarkus-super-heroes/rest-fights` directory.
 
-**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, kafka, etc). This is fine. Once everything completes startup things will work fine.
+**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, etc). This is fine. Once everything completes startup things will work fine.
 
 | Description | Image Tag       | Docker Compose Run Command                                               |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -187,9 +179,9 @@ Pick one of the versions of the application from the table below and execute the
 
 ### Fights Service and all Downstream Dependencies
 
-The above Docker Compose files are meant for standing up this application and the required database, Kafka broker, and Apicurio Schema Registry only. If you want to stand up this application and its downstream services ([rest-villains]({site.url('/rest-villains')}), [rest-heroes]({site.url('/rest-heroes')}), [rest-narration]({site.url('/rest-narration')}), and [grpc-locations]({site.url('/grpc-locations')})), pick one of the versions from the table below and execute the appropriate docker compose command from the `quarkus-super-heroes/rest-fights` directory.
+The above Docker Compose files are meant for standing up this application and the required database only. If you want to stand up this application and its downstream services ([rest-villains]({site.url('/rest-villains')}), [rest-heroes]({site.url('/rest-heroes')}), [rest-narration]({site.url('/rest-narration')}), and [grpc-locations]({site.url('/grpc-locations')})), pick one of the versions from the table below and execute the appropriate docker compose command from the `quarkus-super-heroes/rest-fights` directory.
 
-**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, kafka, etc). This is fine. Once everything completes startup things will work fine.
+**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, etc). This is fine. Once everything completes startup things will work fine.
 
 | Description | Image Tag       | Docker Compose Run Command                                                              |
 |-------------|-----------------|-----------------------------------------------------------------------------------------|
@@ -200,82 +192,11 @@ The above Docker Compose files are meant for standing up this application and th
 
 If you want to develop the Fights service (i.e. via [Quarkus Dev Mode](https://quarkus.io/guides/maven-tooling#dev-mode)) but want to stand up just its downstream services ([rest-villains]({site.url('/rest-villains')}), [rest-heroes]({site.url('/rest-heroes')}), [rest-narration]({site.url('/rest-narration')}), and [grpc-locations]({site.url('/grpc-locations')})), pick one of the versions from the table below and execute the appropriate docker compose command from the `quarkus-super-heroes` directory.
 
-**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, kafka, etc). This is fine. Once everything completes startup things will work fine.
+**Note:** You may see errors as the applications start up. This may happen if an application completes startup before one of its required services (i.e. database, etc). This is fine. Once everything completes startup things will work fine.
 
 | Description | Image Tag       | Docker Compose Run Command                                                                                                                                                                                                                   |
 |-------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | JVM Java 25 | `java25-latest` | `docker compose -f rest-heroes/deploy/docker-compose/java25.yml -f rest-villains/deploy/docker-compose/java25.yml -f rest-narration/deploy/docker-compose/java25.yml -f grpc-locations/deploy/docker-compose/java25.yml up --remove-orphans` |
 | Native      | `native-latest` | `docker compose -f rest-heroes/deploy/docker-compose/native.yml -f rest-villains/deploy/docker-compose/native.yml -f rest-narration/deploy/docker-compose/native.yml -f grpc-locations/deploy/docker-compose/java25.yml up --remove-orphans` |
 
-Once started the application will be exposed at `http://localhost:8082`. The Apicurio Schema Registry will be exposed at `http://localhost:8086`.
-
-## Deploying to Kubernetes
-
-The application can be deployed to Kubernetes using pre-built images or by deploying directly via the Quarkus Kubernetes Extension.
-
-### Using pre-built images
-
-Pre-built images for this application can be found at [`quay.io/quarkus-super-heroes/rest-fights`](https://quay.io/repository/quarkus-super-heroes/rest-fights?tab=tags).
-
-Deployment descriptors for these images are provided in the `deploy/k8s` directory. There are versions for [OpenShift](https://www.openshift.com), [Minikube](https://quarkus.io/guides/deploying-to-kubernetes#deploying-to-minikube), [Kubernetes](https://www.kubernetes.io), and [Knative](https://knative.dev).
-
-**Note:** The [Knative](https://knative.dev/docs/) variant can be used on any Knative installation that runs on top of Kubernetes or OpenShift. For OpenShift, you need [OpenShift Serverless](https://docs.openshift.com/serverless/latest/about/about-serverless.html) installed from the OpenShift operator catalog. Using Knative has the benefit that services are scaled down to zero replicas when they are not used.
-
-Pick one of the versions of the application from the table below and deploy the appropriate descriptor from the `deploy/k8s` directory.
-
-| Description | Image Tag       | OpenShift Descriptor            | Minikube Descriptor            | Kubernetes Descriptor              | Knative Descriptor            |
-|-------------|-----------------|---------------------------------|--------------------------------|------------------------------------|-------------------------------|
-| JVM Java 25 | `java25-latest` | `java25-openshift.yml`          | `java25-minikube.yml`          | `java25-kubernetes.yml`            | `java25-knative.yml`          |
-| Native      | `native-latest` | `native-openshift.yml`          | `native-minikube.yml`          | `native-kubernetes.yml`            | `native-knative.yml`          |
-
-The application is exposed outside of the cluster on port `80`.
-
-These are only the descriptors for this application and the required database, Kafka broker, and Apicurio Schema Registry only. If you want to deploy this application and its downstream services ([rest-villains]({site.url('/rest-villains')}), [rest-heroes]({site.url('/rest-heroes')}), [rest-narration]({site.url('/rest-narration')}), and [grpc-locations]({site.url('/grpc-locations')})), pick one of the versions of the application from the table below and deploy the appropriate descriptor from the `deploy/k8s` directory.
-
-| Description | Image Tag       | OpenShift Descriptor                        | Minikube Descriptor                        | Kubernetes Descriptor                          | Knative Descriptor                        |
-|-------------|-----------------|---------------------------------------------|--------------------------------------------|------------------------------------------------|-------------------------------------------|
-| JVM Java 25 | `java25-latest` | `java25-openshift-all-downstream.yml`       | `java25-minikube-all-downstream.yml`       | `java25-kubernetes-all-downstream.yml`         | `java25-knative-all-downstream.yml`       |
-| Native      | `native-latest` | `native-openshift-all-downstream.yml`       | `native-minikube-all-downstream.yml`       | `native-kubernetes-all-downstream.yml`         | `native-knative-all-downstream.yml`       |
-
-Each application is exposed outside of the cluster on port `80`.
-
-### Using Helm
-
-Helm charts for this application are provided in the `deploy/helm` directory with separate charts per deployment target.
-
-To deploy using Helm (e.g. JVM Java 25 on Kubernetes):
-
-```shell
-helm install rest-fights deploy/helm/kubernetes/ -f deploy/helm/kubernetes/values-java25.yaml
-```
-
-For native:
-
-```shell
-helm install rest-fights deploy/helm/kubernetes/ -f deploy/helm/kubernetes/values-native.yaml
-```
-
-To deploy rest-fights with all downstream dependencies:
-
-```shell
-helm dependency update deploy/helm/kubernetes-all-downstream
-helm install super-heroes-fights deploy/helm/kubernetes-all-downstream/ -f deploy/helm/kubernetes-all-downstream/values-java25.yaml
-```
-
-### Deploying directly via Kubernetes Extensions
-
-Following the [deployment section](https://quarkus.io/guides/deploying-to-kubernetes#deployment) of the [Quarkus Kubernetes Extension Guide](https://quarkus.io/guides/deploying-to-kubernetes), you can run one of the following commands to deploy the application and any of its dependencies to your preferred Kubernetes distribution.
-
-**Note:** For non-OpenShift or minikube Kubernetes variants, you will most likely need to [push the image to a container registry](https://quarkus.io/guides/container-image#pushing) by adding the `-Dquarkus.container-image.push=true` flag, as well as setting the `quarkus.container-image.registry`, `quarkus.container-image.group`, and/or the `quarkus.container-image.name` properties to different values.
-
-| Target Platform        | Java Version | Command                                                                                                                                                                                                                                      |
-|------------------------|:------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kubernetes             | 25 | `./mvnw clean package -Dquarkus.profile=kubernetes -Dquarkus.kubernetes.deploy=true -DskipTests`                                                                                                                                             |
-| OpenShift              | 25 | `./mvnw clean package -Dquarkus.profile=openshift -Dquarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000 -Dquarkus.container-image.group=$(oc project -q) -Dquarkus.kubernetes.deploy=true -DskipTests`         |
-| Minikube               | 25 | `./mvnw clean package -Dquarkus.profile=minikube -Dquarkus.kubernetes.deploy=true -DskipTests`                                                                                                                                               |
-| Knative                | 25 | `./mvnw clean package -Dquarkus.profile=knative -Dquarkus.kubernetes.deploy=true -DskipTests`                                                                                                                                                |
-| Knative (on OpenShift) | 25 | `./mvnw clean package -Dquarkus.profile=knative-openshift -Dquarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000 -Dquarkus.container-image.group=$(oc project -q) -Dquarkus.kubernetes.deploy=true -DskipTests` |
-
----
-
-[View source on GitHub](https://github.com/quarkusio/quarkus-super-heroes/tree/main/rest-fights)
+Once started the application will be exposed at `http://localhost:8082`.

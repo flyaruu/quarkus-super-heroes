@@ -1,7 +1,6 @@
 #!/bin/bash -ex
 
 # Create the deploy/docker-compose files for each version of each of the Quarkus services
-# Then add on the ui-super-heroes
 
 INPUT_DIR=src/main/docker-compose
 OUTPUT_DIR=deploy/docker-compose
@@ -58,13 +57,9 @@ create_project_output() {
     cat $infra_input_file >> $project_output_file
   fi
 
-  if [[ -f "$project_input_file" ]]; then
-    cat $project_input_file >> $project_output_file
-
-    if [[ "$project" == "event-statistics" || "$project" == "ui-super-heroes" ]]; then
-      cat $project_input_file >> $all_apps_output_file
+    if [[ -f "$project_input_file" ]]; then
+      cat $project_input_file >> $project_output_file
     fi
-  fi
 
   if [[ "$project" == "rest-fights" ]]; then
     # Need to process/create the downstream version
@@ -142,7 +137,7 @@ create_monitoring() {
 }
 
 create_apps() {
-  for project in "grpc-locations" "rest-narration" "rest-villains" "rest-heroes" "rest-fights" "event-statistics" "ui-super-heroes"
+  for project in "grpc-locations" "rest-narration" "rest-villains" "rest-heroes" "rest-fights"
   do
     rm -rf $project/$OUTPUT_DIR/*.yml
 
