@@ -27,7 +27,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: super
       MONGO_INITDB_ROOT_PASSWORD: super
     volumes:
-      - rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
+      - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
   rest-fights-java21:
     image: flyaruu/rest-fights-jvm21
@@ -67,7 +67,7 @@ services:
       POSTGRES_PASSWORD: superbad
       POSTGRES_DB: villains_database
     volumes:
-      - rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   heroes-db:
     image: postgres:16
@@ -79,7 +79,7 @@ services:
       POSTGRES_PASSWORD: superman
       POSTGRES_DB: heroes_database
     volumes:
-      - rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   locations-db:
     image: mariadb:11.5
@@ -93,7 +93,7 @@ services:
       MARIADB_ROOT_PASSWORD: locations
       MARIADB_SKIP_TEST_DB: yes
     volumes:
-      - grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   rest-villains-java21:
     image: flyaruu/rest-villains-jvm21

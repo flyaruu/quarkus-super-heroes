@@ -28,44 +28,17 @@ services:
       MONGO_INITDB_ROOT_USERNAME: super
       MONGO_INITDB_ROOT_PASSWORD: super
     volumes:
-      - rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
-
-  apicurio:
-    image: quay.io/apicurio/apicurio-registry-mem:2.6.5.Final
-    container_name: apicurio
-    ports:
-      - "8086:8086"
-    environment:
-      REGISTRY_AUTH_ANONYMOUS_READ_ACCESS_ENABLED: "true"
-      QUARKUS_HTTP_PORT: 8086
-
-  fights-kafka:
-    image: quay.io/strimzi/kafka:0.43.0-kafka-3.8.0
-    container_name: fights-kafka
-    depends_on:
-      - apicurio
-    command:
-      - "sh"
-      - "-c"
-      - "export CLUSTER_ID=$$(bin/kafka-storage.sh random-uuid) && bin/kafka-storage.sh format -t $${CLUSTER_ID} -c config/kraft/server.properties && bin/kafka-server-start.sh config/kraft/server.properties --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS}"
-    ports:
-      - "9092:9092"
-    environment:
-      LOG_DIR: /tmp/logs
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fights-kafka:9092
+      - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
   rest-fights-native:
     image: quay.io/quarkus-super-heroes/rest-fights:native-latest
     container_name: rest-fights-native
     depends_on:
       - fights-db
-      - apicurio
-      - fights-kafka
     ports:
       - "8082:8082"
     environment:
       QUARKUS_MONGODB_HOSTS: fights-db:27017
-      KAFKA_BOOTSTRAP_SERVERS: PLAINTEXT://fights-kafka:9092
       QUARKUS_LIQUIBASE_MONGODB_MIGRATE_AT_START: "false"
       QUARKUS_MONGODB_CREDENTIALS_USERNAME: superfight
       QUARKUS_MONGODB_CREDENTIALS_PASSWORD: superfight
@@ -100,7 +73,7 @@ services:
       POSTGRES_PASSWORD: superbad
       POSTGRES_DB: villains_database
     volumes:
-      - rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   heroes-db:
     image: postgres:16
@@ -112,7 +85,7 @@ services:
       POSTGRES_PASSWORD: superman
       POSTGRES_DB: heroes_database
     volumes:
-      - rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   locations-db:
     image: mariadb:11.5
@@ -126,7 +99,7 @@ services:
       MARIADB_ROOT_PASSWORD: locations
       MARIADB_SKIP_TEST_DB: yes
     volumes:
-      - grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+      - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   rest-villains-native:
     image: quay.io/quarkus-super-heroes/rest-villains:native-latest
