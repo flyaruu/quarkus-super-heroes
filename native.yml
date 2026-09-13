@@ -31,7 +31,7 @@ services:
       - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
   rest-fights-native:
-    image: lyaruu/rest-fights-native:latest
+    image: flyaruu/rest-fights-native:latest
     container_name: rest-fights-native
     depends_on:
       - fights-db
