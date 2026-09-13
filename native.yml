@@ -31,7 +31,7 @@ services:
       - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
   rest-fights-native:
-    image: quay.io/quarkus-super-heroes/rest-fights:native-latest
+    image: lyaruu/rest-fights-native:latest
     container_name: rest-fights-native
     depends_on:
       - fights-db
@@ -102,7 +102,7 @@ services:
       - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
   rest-villains-native:
-    image: quay.io/quarkus-super-heroes/rest-villains:native-latest
+    image: flyaruu/rest-villains-native:latest
     container_name: rest-villains-native
     depends_on:
       - villains-db
@@ -130,7 +130,7 @@ services:
           cpus: '0.5'
 
   rest-heroes-native:
-    image: quay.io/quarkus-super-heroes/rest-heroes:native-latest
+    image: flyaruu/rest-heroes-native:latest
     container_name: rest-heroes-native
     depends_on:
       - heroes-db
@@ -157,29 +157,8 @@ services:
           memory: 256M
           cpus: '0.5'
 
-  rest-narration-native:
-    image: quay.io/quarkus-super-heroes/rest-narration:native-latest
-    container_name: rest-narration-native
-    ports:
-      - "8087:8087"
-    environment:
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
-    restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-narration
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
-
   grpc-locations-native:
-    image: quay.io/quarkus-super-heroes/grpc-locations:native-latest
+    image: flyaruu/grpc-locations-native:latest
     container_name: grpc-locations-native
     depends_on:
       - locations-db
