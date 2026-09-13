@@ -8,14 +8,10 @@
   <packaging>pom</packaging>
   <name>Quarkus Sample :: Super-Heroes</name>
   <modules>
-    <module>event-statistics</module>
     <module>grpc-locations</module>
     <module>rest-fights</module>
     <module>rest-heroes</module>
-    <module>rest-narration</module>
     <module>rest-villains</module>
-    <module>ui-super-heroes</module>
-    <module>scripts/jmeter</module>
   </modules>
   <organization>
     <name>Quarkus</name>

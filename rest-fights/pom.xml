@@ -48,10 +48,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-messaging-kafka</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
     <dependency>
@@ -98,14 +94,6 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-apicurio-registry-avro</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.strimzi</groupId>
-      <artifactId>kafka-oauth-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.strimzi</groupId>
-      <artifactId>kafka-oauth-common</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -218,16 +206,6 @@
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock-grpc-extension</artifactId>
       <version>${wiremock-grpc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-test-kafka-companion</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
