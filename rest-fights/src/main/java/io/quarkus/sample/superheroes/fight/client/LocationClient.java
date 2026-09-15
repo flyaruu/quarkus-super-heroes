@@ -38,7 +38,6 @@ public class LocationClient {
 
 	@CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
   @CircuitBreakerName("findRandomLocation")
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
   @WithSpan(kind = SpanKind.CLIENT, value = "LocationClient.findRandomLocation")
 	public Uni<FightLocation> findRandomLocation() {
 		Log.debug("Making request to location service to find a random location");

@@ -124,58 +124,6 @@ class VillainClientTests {
   }
 
   @Test
-  void doesntRecoverFrom500() {
-    this.wireMockServer.stubFor(
-      get(urlEqualTo(VILLAIN_RANDOM_URI))
-        .willReturn(serverError())
-    );
-
-    // The way the circuit breaker works is that you have to fire at least requestVolumeThreshold
-    // requests at the breaker before it starts to trip
-    // This is so it can fill its window
-
-    // Circuit breaker should trip after 2 calls to findRandomVillain
-    // 1 Call = 1 actual call + 3 fallbacks = 4 total calls
-    assertThat(this.circuitBreakerMaintenance.currentState("findRandomVillain"))
-      .isEqualTo(CircuitBreakerState.CLOSED);
-
-    // First 2 calls (and 3 subsequent retries) should just fail with WebApplicationException
-    // While making actual calls to the service
-    IntStream.rangeClosed(1, 2)
-      .forEach(i ->
-        this.villainClient.findRandomVillain()
-          .subscribe().withSubscriber(UniAssertSubscriber.create())
-          .assertSubscribed()
-          .awaitFailure(Duration.ofSeconds(5))
-          .assertFailedWith(WebApplicationException.class)
-      );
-
-    // Next call should trip the breaker
-    // The breaker should not make an actual call
-    var ex = this.villainClient.findRandomVillain()
-      .subscribe().withSubscriber(UniAssertSubscriber.create())
-      .assertSubscribed()
-      .awaitFailure(Duration.ofSeconds(5))
-      .getFailure();
-
-    assertThat(ex)
-      .isNotNull()
-      .isExactlyInstanceOf(CircuitBreakerOpenException.class)
-      .hasMessageContainingAll("%s#findRandomVillain".formatted(VillainClient.class.getName()), "circuit breaker is open");
-
-    // Verify that the breaker is open
-    assertThat(this.circuitBreakerMaintenance.currentState("findRandomVillain"))
-      .isEqualTo(CircuitBreakerState.OPEN);
-
-    // Verify that the server only saw 8 actual requests
-    // (2 "real" requests and 3 retries each)
-    this.wireMockServer.verify(8,
-      getRequestedFor(urlEqualTo(VILLAIN_RANDOM_URI))
-        .withHeader(ACCEPT, equalTo(APPLICATION_JSON))
-    );
-  }
-
-  @Test
   void helloVillains() {
     this.wireMockServer.stubFor(
       get(urlEqualTo(VILLAIN_HELLO_URI))

@@ -45,7 +45,6 @@ public class VillainClient {
    */
   @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
   @CircuitBreakerName("findRandomVillain")
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
   @WithSpan(kind = SpanKind.CLIENT, value = "VillainClient.findRandomVillain")
   public Uni<Villain> findRandomVillain() {
     // Want the 404 handling to be part of the circuit breaker

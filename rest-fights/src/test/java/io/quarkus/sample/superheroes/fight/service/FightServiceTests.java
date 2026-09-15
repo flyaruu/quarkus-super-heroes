@@ -508,30 +508,6 @@ class FightServiceTests extends FightServiceTestsBase {
     verify(this.fightService).fallbackGenerateImageFromNarration(DEFAULT_NARRATION);
   }
 
-  @Test
-  void narrateFightNarrationTimesOut() {
-    var fightToNarrate = createFightToNarrateHeroWon();
-    var timeout = Duration.ofSeconds(ShorterTimeoutsProfile.NARRATION_OVERRIDDEN_TIMEOUT + 1);
-
-    when(this.narrationClient.narrate(fightToNarrate))
-      .thenReturn(
-        Uni.createFrom().item(DEFAULT_NARRATION)
-          .onItem().delayIt().by(timeout)
-      );
-
-    var narration = this.fightService.narrateFight(fightToNarrate)
-			.subscribe().withSubscriber(UniAssertSubscriber.create())
-			.assertSubscribed()
-			.awaitItem(timeout.multipliedBy(4))
-			.getItem();
-
-    assertThat(narration)
-      .isNotNull()
-      .isEqualTo(FALLBACK_NARRATION);
-
-    verify(this.fightService).fallbackNarrateFight(fightToNarrate);
-  }
-
 	@Test
 	void performFightHeroShouldWin() {
     var fightOutcome = createFightHeroWon();

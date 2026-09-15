@@ -257,7 +257,6 @@ public class FightService {
   @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
   @CircuitBreakerName("narrateFight")
   @Timeout(value = 30, unit = ChronoUnit.SECONDS)
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
 	@Fallback(fallbackMethod = "fallbackNarrateFight")
   @WithSpan("FightService.narrateFight")
   public Uni<String> narrateFight(@SpanAttribute("arg.fight") FightToNarrate fight) {
@@ -268,7 +267,6 @@ public class FightService {
   @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
   @CircuitBreakerName("generateImageFromNarration")
   @Timeout(value = 30, unit = ChronoUnit.SECONDS)
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
 	@Fallback(fallbackMethod = "fallbackGenerateImageFromNarration")
   @WithSpan("FightService.generateImageFromNarration")
   public Uni<FightImage> generateImageFromNarration(@SpanAttribute("arg.narration") String narration) {
