@@ -93,6 +93,12 @@ services:
       MARIADB_SKIP_TEST_DB: yes
     volumes:
       - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u locations --password=locations"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   rest-villains:
     image: flyaruu/rest-villains-native:latest
