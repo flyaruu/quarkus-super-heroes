@@ -126,7 +126,8 @@ services:
   grpc-locations:
     image: flyaruu/grpc-locations-native:latest
     depends_on:
-      - locations-db
+      locations-db:
+        condition: service_healthy
     ports:
       - "8089:8089"
     environment:
