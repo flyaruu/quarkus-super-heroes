@@ -47,8 +47,6 @@ services:
       QUARKUS_STORK_NARRATION_SERVICE_SERVICE_DISCOVERY_ADDRESS_LIST: rest-narration:8087
       QUARKUS_GRPC_CLIENTS_LOCATIONS_HOST: grpc-locations
       QUARKUS_GRPC_CLIENTS_LOCATIONS_PORT: 8089
-      MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
     networks:
       default:
@@ -59,9 +57,6 @@ services:
         limits:
           memory: 1G
           cpus: '1'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
 
   villains-db:
     image: postgres:16
@@ -74,6 +69,12 @@ services:
       POSTGRES_DB: villains_database
     volumes:
       - ./rest-villains/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superbad -d villains_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   heroes-db:
     image: postgres:16
@@ -86,6 +87,12 @@ services:
       POSTGRES_DB: heroes_database
     volumes:
       - ./rest-heroes/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superman -d heroes_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   locations-db:
     image: mariadb:11.5
@@ -113,8 +120,6 @@ services:
       QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY: validate
       QUARKUS_DATASOURCE_USERNAME: superbad
       QUARKUS_DATASOURCE_PASSWORD: superbad
-      QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
     networks:
       default:
@@ -125,9 +130,6 @@ services:
         limits:
           memory: 1G
           cpus: '1'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
 
   rest-heroes-native:
     image: flyaruu/rest-heroes-native:latest
@@ -142,7 +144,6 @@ services:
       QUARKUS_DATASOURCE_USERNAME: superman
       QUARKUS_DATASOURCE_PASSWORD: superman
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
     networks:
       default:
@@ -153,9 +154,6 @@ services:
         limits:
           memory: 1G
           cpus: '1'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
 
   grpc-locations-native:
     image: flyaruu/grpc-locations-native:latest
@@ -170,7 +168,6 @@ services:
       QUARKUS_DATASOURCE_USERNAME: locations
       QUARKUS_DATASOURCE_PASSWORD: locations
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
     networks:
       default:
@@ -181,7 +178,3 @@ services:
         limits:
           memory: 1G
           cpus: '1'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
-
