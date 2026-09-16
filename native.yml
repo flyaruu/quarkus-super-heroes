@@ -112,7 +112,8 @@ services:
     image: flyaruu/rest-villains-native:latest
     container_name: rest-villains-native
     depends_on:
-      - villains-db
+      villains-db:
+        condition: service_healthy
     ports:
       - "8084:8084"
     environment:
@@ -135,7 +136,8 @@ services:
     image: flyaruu/rest-heroes-native:latest
     container_name: rest-heroes-native
     depends_on:
-      - heroes-db
+      heroes-db:
+        condition: service_healthy
     ports:
       - "8083:8083"
     environment:
