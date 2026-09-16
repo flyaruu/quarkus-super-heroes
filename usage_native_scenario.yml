@@ -2,7 +2,7 @@
 name: Superheroes k6 scenario
 author: Frank Lyaruu
 description: Superheroes (Quarkus) k6 load testing scenario )
-compose-file: !include java21.yml
+compose-file: !include native.yml
 ignore-unsupported-compose: true
 # services:
 #     k6:
