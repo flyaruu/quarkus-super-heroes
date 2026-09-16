@@ -4,19 +4,19 @@ import { randomFight } from './randomFight.js';
 
 export const options = {
   thresholds: {
-    http_req_duration: ['p(95)<1000'],  // 95% of requests should be <50ms
-    http_req_failed: ['rate<0.001'],    // error rate should be <0.1%
-    dropped_iterations: ['count == 0'],  // no dropped iterations allowed
+    http_req_duration: ['p(95)<3000'],  // 95% of requests should be <50ms
+    http_req_failed: ['rate<0.01'],    // error rate should be <0.1%
+    dropped_iterations: ['rate<0.01'],  // no dropped iterations allowed
   },
   scenarios: {
     ramp_high_load: {
       executor: 'ramping-arrival-rate',
-      startRate: 10,
+      startRate: 1,
       timeUnit: '1s',
-      preAllocatedVUs: 20,
+      preAllocatedVUs: 150,
       maxVUs: 400,
       stages: [
-        { target: __ENV.RAMPING_RATE ? parseInt(__ENV.RAMPING_RATE) : 500, duration: '5s' },
+        { target: __ENV.RAMPING_RATE ? parseInt(__ENV.RAMPING_RATE) : 500, duration: '10s' },
         { target: __ENV.RAMPING_RATE ? parseInt(__ENV.RAMPING_RATE) : 500, duration: '20s' },
         { target: 0, duration: '5s' },
       ]

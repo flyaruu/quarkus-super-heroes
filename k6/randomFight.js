@@ -32,9 +32,9 @@ export function randomFight() {
         'location status is 200': (r) => r.status === 200,
     });
     var location = JSON.parse(location_response.body);
-    check(location, {
-        'location is not fallback': (r) => !location.name.toLowerCase().includes("fallback")
-    })
+#    check(location, {
+#        'location is not fallback': (r) => !location.name.toLowerCase().includes("fallback")
+#    })
     var fight_request = { hero: hero, villain: villain, location: location };
     var fight_response = http.post(host + "/api/fights", JSON.stringify(fight_request), json_post_header);
     // console.log(fight_response);

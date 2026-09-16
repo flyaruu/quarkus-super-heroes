@@ -11,15 +11,14 @@ services:
       K6_HOST: http://rest-fights:8092
     command: ["bash", "-c", "while true; do sleep 3600; done"]
     volumes:
-      - k6:/k6:ro
-      - k6/results:/results
+      - ./k6:/k6:ro
+      - ./k6/results:/results
     deploy:
       resources:
         limits:
-          memory: 42M
+          memory: 100M
   fights-db:
     image: mongo:7.0
-    container_name: fights-db
     ports:
       - "27017"
     environment:
@@ -29,9 +28,8 @@ services:
     volumes:
       - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
-  rest-fights-java21:
-    image: flyaruu/rest-fights-jvm21
-    container_name: rest-fights-java21
+  rest-fights:
+    image: flyaruu/rest-fights-jvm21:latest
     depends_on:
       - fights-db
     ports:
@@ -47,10 +45,6 @@ services:
       QUARKUS_GRPC_CLIENTS_LOCATIONS_HOST: grpc-locations
       QUARKUS_GRPC_CLIENTS_LOCATIONS_PORT: 8089
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-fights
     deploy:
       resources:
         limits:
@@ -59,7 +53,6 @@ services:
 
   villains-db:
     image: postgres:16
-    container_name: villains-db
     ports:
       - "5432"
     environment:
@@ -71,7 +64,6 @@ services:
 
   heroes-db:
     image: postgres:16
-    container_name: heroes-db
     ports:
       - "5432"
     environment:
@@ -83,7 +75,6 @@ services:
 
   locations-db:
     image: mariadb:11.5
-    container_name: locations-db
     ports:
       - "3306"
     environment:
@@ -92,12 +83,17 @@ services:
       MARIADB_DATABASE: locations_database
       MARIADB_ROOT_PASSWORD: locations
       MARIADB_SKIP_TEST_DB: yes
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
-  rest-villains-java21:
-    image: flyaruu/rest-villains-jvm21
-    container_name: rest-villains-java21
+  rest-villains:
+    image: flyaruu/rest-villains-jvm21:latest
     depends_on:
       - villains-db
     ports:
@@ -108,21 +104,15 @@ services:
       QUARKUS_DATASOURCE_USERNAME: superbad
       QUARKUS_DATASOURCE_PASSWORD: superbad
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-villains
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  rest-heroes-java21:
-    image: flyaruu/rest-heroes-jvm21
-    container_name: rest-heroes-java21
+  rest-heroes:
+    image: flyaruu/rest-heroes-jvm21:latest
     depends_on:
       - heroes-db
     ports:
@@ -133,23 +123,19 @@ services:
       QUARKUS_DATASOURCE_USERNAME: superman
       QUARKUS_DATASOURCE_PASSWORD: superman
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-heroes
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '1'
 
-  grpc-locations-java21:
-    image: flyaruu/grpc-locations-jvm21
-    container_name: grpc-locations-java21
+  grpc-locations:
+    image: flyaruu/grpc-locations-jvm21:latest
     depends_on:
-      - locations-db
+      locations-db:
+        condition: service_healthy
+
     ports:
       - "8089:8089"
     environment:
@@ -158,12 +144,7 @@ services:
       QUARKUS_DATASOURCE_USERNAME: locations
       QUARKUS_DATASOURCE_PASSWORD: locations
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - grpc-locations
     deploy:
       resources:
         limits:
