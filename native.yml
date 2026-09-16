@@ -20,7 +20,6 @@ services:
 
   fights-db:
     image: mongo:7.0
-    container_name: fights-db
     ports:
       - "27017"
     environment:
@@ -30,9 +29,8 @@ services:
     volumes:
       - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
-  rest-fights-native:
+  rest-fights:
     image: flyaruu/rest-fights-native:latest
-    container_name: rest-fights-native
     depends_on:
       - fights-db
     ports:
@@ -50,14 +48,9 @@ services:
       MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://apicurio:8086/apis/registry/v2
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-fights
 
   villains-db:
     image: postgres:16
-    container_name: villains-db
     ports:
       - "5432"
     environment:
@@ -69,7 +62,6 @@ services:
 
   heroes-db:
     image: postgres:16
-    container_name: heroes-db
     ports:
       - "5432"
     environment:
@@ -81,7 +73,6 @@ services:
 
   locations-db:
     image: mariadb:11.5
-    container_name: locations-db
     ports:
       - "3306"
     environment:
@@ -90,12 +81,17 @@ services:
       MARIADB_DATABASE: locations_database
       MARIADB_ROOT_PASSWORD: locations
       MARIADB_SKIP_TEST_DB: yes
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
-  rest-villains-native:
+  rest-villains:
     image: flyaruu/rest-villains-native:latest
-    container_name: rest-villains-native
     depends_on:
       - villains-db
     ports:
@@ -106,16 +102,10 @@ services:
       QUARKUS_DATASOURCE_USERNAME: superbad
       QUARKUS_DATASOURCE_PASSWORD: superbad
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
-      QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-villains
 
-  rest-heroes-native:
+  rest-heroes:
     image: flyaruu/rest-heroes-native:latest
-    container_name: rest-heroes-native
     depends_on:
       - heroes-db
     ports:
@@ -128,14 +118,9 @@ services:
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-heroes
 
-  grpc-locations-native:
+  grpc-locations:
     image: flyaruu/grpc-locations-native:latest
-    container_name: grpc-locations-native
     depends_on:
       - locations-db
     ports:
@@ -148,7 +133,3 @@ services:
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
       QUARKUS_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - grpc-locations
