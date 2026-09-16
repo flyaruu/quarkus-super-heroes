@@ -20,7 +20,6 @@ services:
 
   fights-db:
     image: mongo:7.0
-    container_name: fights-db
     ports:
       - "27017"
     environment:
@@ -30,9 +29,8 @@ services:
     volumes:
       - ./rest-fights/deploy/db-init/initialize-database.js:/docker-entrypoint-initdb.d/1-init-db.js
 
-  rest-fights-native:
+  rest-fights:
     image: flyaruu/rest-fights-native:latest
-    container_name: rest-fights-native
     depends_on:
       - fights-db
     ports:
@@ -48,19 +46,9 @@ services:
       QUARKUS_GRPC_CLIENTS_LOCATIONS_HOST: grpc-locations
       QUARKUS_GRPC_CLIENTS_LOCATIONS_PORT: 8089
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-fights
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
 
   villains-db:
     image: postgres:16
-    container_name: villains-db
     ports:
       - "5432"
     environment:
@@ -78,7 +66,6 @@ services:
 
   heroes-db:
     image: postgres:16
-    container_name: heroes-db
     ports:
       - "5432"
     environment:
@@ -96,7 +83,6 @@ services:
 
   locations-db:
     image: mariadb:11.5
-    container_name: locations-db
     ports:
       - "3306"
     environment:
@@ -108,9 +94,8 @@ services:
     volumes:
       - ./grpc-locations/deploy/db-init/initialize-tables.sql:/docker-entrypoint-initdb.d/1-init-tables.sql
 
-  rest-villains-native:
+  rest-villains:
     image: flyaruu/rest-villains-native:latest
-    container_name: rest-villains-native
     depends_on:
       villains-db:
         condition: service_healthy
@@ -122,19 +107,9 @@ services:
       QUARKUS_DATASOURCE_USERNAME: superbad
       QUARKUS_DATASOURCE_PASSWORD: superbad
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-villains
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
 
-  rest-heroes-native:
+  rest-heroes:
     image: flyaruu/rest-heroes-native:latest
-    container_name: rest-heroes-native
     depends_on:
       heroes-db:
         condition: service_healthy
@@ -147,19 +122,9 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: superman
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - rest-heroes
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
 
-  grpc-locations-native:
+  grpc-locations:
     image: flyaruu/grpc-locations-native:latest
-    container_name: grpc-locations-native
     depends_on:
       - locations-db
     ports:
@@ -171,12 +136,3 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: locations
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
     restart: on-failure
-    networks:
-      default:
-        aliases:
-          - grpc-locations
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
