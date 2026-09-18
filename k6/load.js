@@ -13,7 +13,7 @@ export const options = {
       executor: 'ramping-arrival-rate',
       startRate: 10,
       timeUnit: '1s',
-      preAllocatedVUs: 20,
+      preAllocatedVUs: 200,
       maxVUs: 400,
       stages: [
         { target: __ENV.RAMPING_RATE ? parseInt(__ENV.RAMPING_RATE) : 500, duration: '5s' },
