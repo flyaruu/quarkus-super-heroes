@@ -1,12 +1,8 @@
 package io.quarkus.sample.superheroes.fight.client;
 
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
-import org.eclipse.microprofile.faulttolerance.Retry;
 
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.logging.Log;
@@ -21,9 +17,6 @@ import io.quarkus.sample.superheroes.location.grpc.RandomLocationRequest;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
-import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.instrumentation.annotations.WithSpan;
-import io.smallrye.faulttolerance.api.CircuitBreakerName;
 import io.smallrye.mutiny.Uni;
 
 @ApplicationScoped
@@ -36,10 +29,6 @@ public class LocationClient {
     this.locationMapper = locationMapper;
   }
 
-	@CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
-  @CircuitBreakerName("findRandomLocation")
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
-  @WithSpan(kind = SpanKind.CLIENT, value = "LocationClient.findRandomLocation")
 	public Uni<FightLocation> findRandomLocation() {
 		Log.debug("Making request to location service to find a random location");
 
@@ -49,7 +38,6 @@ public class LocationClient {
 			.onFailure(this::isNotFoundFailure).recoverWithNull();
 	}
 
-	@WithSpan(kind = SpanKind.CLIENT, value = "LocationClient.helloLocations")
 	public Uni<String> helloLocations() {
 		Log.debug("Making request to location service for hello operation");
 

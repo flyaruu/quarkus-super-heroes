@@ -256,47 +256,6 @@ class FightResourceIT {
 				.withHeader(ACCEPT, equalTo(APPLICATION_JSON))
 		);
 	}
-
-	@Test
-	@Order(DEFAULT_ORDER + 1)
-	void getRandomFightersHeroDelay() {
-		resetHeroVillainCircuitBreakersToClosedState();
-
-		this.wireMockServer.stubFor(
-			WireMock.get(urlEqualTo(HERO_API_URI))
-				.willReturn(
-					okForContentType(APPLICATION_JSON, getDefaultHeroJson())
-						.withFixedDelay(1050)
-				)
-		);
-
-		this.wireMockServer.stubFor(
-			WireMock.get(urlEqualTo(VILLAIN_API_URI))
-				.willReturn(okForContentType(APPLICATION_JSON, getDefaultVillainJson()))
-		);
-
-		var fighters = get("/api/fights/randomfighters")
-			.then()
-			.statusCode(OK.getStatusCode())
-			.contentType(JSON)
-      .extract().as(Fighters.class);
-
-    assertThat(fighters)
-      .isNotNull()
-      .usingRecursiveComparison()
-      .isEqualTo(new Fighters(FALLBACK_HERO, DEFAULT_VILLAIN));
-
-		this.wireMockServer.verify(1,
-			getRequestedFor(urlEqualTo(HERO_API_URI))
-				.withHeader(ACCEPT, equalTo(APPLICATION_JSON))
-		);
-
-		this.wireMockServer.verify(1,
-			getRequestedFor(urlEqualTo(VILLAIN_API_URI))
-				.withHeader(ACCEPT, equalTo(APPLICATION_JSON))
-		);
-	}
-
 	@Test
 	@Order(DEFAULT_ORDER + 1)
 	void getRandomFightersVillainFallback() {
@@ -532,45 +491,6 @@ class FightResourceIT {
     );
   }
 
-	@Test
-  @Order(DEFAULT_ORDER + 1)
-  void getNarrationDelay() {
-    resetNarrationCircuitBreakersToClosedState();
-
-		var delay = (ShorterTimeoutsProfile.NARRATION_OVERRIDDEN_TIMEOUT + 1) * 1000;
-
-    this.wireMockServer.stubFor(
-      WireMock.post(urlEqualTo(NARRATION_API_BASE_URI))
-        .willReturn(
-					okForContentType(TEXT_PLAIN, DEFAULT_NARRATION)
-						.withFixedDelay(delay)
-        )
-    );
-
-		// Need to increase the rest-assured timeouts
-		var config = RestAssured.config()
-			.httpClient(
-				HttpClientConfig.httpClientConfig()
-					.setParam("http.connection.timeout", delay * 4)
-					.setParam("http.socket.timeout", delay * 4)
-			);
-
-    given()
-	    .config(config)
-      .accept(TEXT)
-      .contentType(JSON)
-      .body(createFightToNarrateHeroWon())
-      .when().post("/api/fights/narrate").then()
-        .contentType(TEXT)
-        .body(is(FALLBACK_NARRATION));
-
-    this.wireMockServer.verify(moreThanOrExactly(3),
-      postRequestedFor(urlEqualTo(NARRATION_API_BASE_URI))
-        .withHeader(ACCEPT, containing(TEXT_PLAIN))
-        .withHeader(CONTENT_TYPE, containing(APPLICATION_JSON))
-    );
-  }
-
   @Test
   @Order(DEFAULT_ORDER)
   void shouldGetImageForNarration() {
@@ -617,50 +537,6 @@ class FightResourceIT {
       .when().post("/api/fights/narrate/image").then()
       .contentType(JSON)
       .extract().as(FightImage.class);
-
-    assertThat(image)
-      .isNotNull()
-      .usingRecursiveAssertion()
-      .isEqualTo(FALLBACK_IMAGE);
-
-    this.wireMockServer.verify(moreThanOrExactly(3),
-      postRequestedFor(urlEqualTo(NARRATION_API_IMAGE_GEN_URI))
-        .withHeader(ACCEPT, containing(APPLICATION_JSON))
-        .withHeader(CONTENT_TYPE, containing(TEXT_PLAIN))
-    );
-  }
-
-  @Test
-  @Order(DEFAULT_ORDER + 1)
-  void getImageGenerationForNarrationDelay() {
-    resetNarrationCircuitBreakersToClosedState();
-
-		var delay = (ShorterTimeoutsProfile.NARRATION_OVERRIDDEN_TIMEOUT + 1) * 1000;
-
-    this.wireMockServer.stubFor(
-      WireMock.post(urlEqualTo(NARRATION_API_IMAGE_GEN_URI))
-        .willReturn(
-          okJson(getDefaultImageJson())
-						.withFixedDelay(delay)
-        )
-    );
-
-		// Need to increase the rest-assured timeouts
-		var config = RestAssured.config()
-			.httpClient(
-				HttpClientConfig.httpClientConfig()
-					.setParam("http.connection.timeout", delay * 4)
-					.setParam("http.socket.timeout", delay * 4)
-			);
-
-    var image = given()
-	    .config(config)
-      .accept(JSON)
-      .contentType(TEXT)
-      .body(DEFAULT_NARRATION)
-      .when().post("/api/fights/narrate/image").then()
-        .contentType(JSON)
-        .extract().as(FightImage.class);
 
     assertThat(image)
       .isNotNull()

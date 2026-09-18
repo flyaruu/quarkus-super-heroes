@@ -7,8 +7,6 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 
-import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.ext.DefaultClientHeadersFactoryImpl;
 import org.jboss.resteasy.reactive.client.impl.UniInvoker;
 
@@ -18,8 +16,6 @@ import io.quarkus.rest.client.reactive.runtime.MicroProfileRestClientRequestFilt
 import io.quarkus.sample.superheroes.fight.config.FightConfig;
 
 import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.instrumentation.annotations.WithSpan;
-import io.smallrye.faulttolerance.api.CircuitBreakerName;
 import io.smallrye.mutiny.Uni;
 
 /**
@@ -40,13 +36,9 @@ public class VillainClient {
   }
 
   /**
-   * Finds a random {@link Villain}. The retry logic is applied to the result of the {@link CircuitBreaker}, meaning that retries that return failures could trigger the breaker to open.
+   * Finds a random {@link Villain}. The retry logic is applied to the resul, meaning that retries that return failures could trigger the breaker to open.
    * @return A random {@link Villain}
    */
-  @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
-  @CircuitBreakerName("findRandomVillain")
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
-  @WithSpan(kind = SpanKind.CLIENT, value = "VillainClient.findRandomVillain")
   public Uni<Villain> findRandomVillain() {
     // Want the 404 handling to be part of the circuit breaker
     // This means that the 404 responses aren't considered errors by the circuit breaker
@@ -65,7 +57,6 @@ public class VillainClient {
    * Calls hello on the Villains service.
    * @return A "hello" from Villains
    */
-  @WithSpan(kind = SpanKind.CLIENT, value = "VillainClient.helloVillains")
   public Uni<String> helloVillains() {
     var target =this.villainClient.path("hello");
     Log.debugf("Going to make request to %s", target.getUri());

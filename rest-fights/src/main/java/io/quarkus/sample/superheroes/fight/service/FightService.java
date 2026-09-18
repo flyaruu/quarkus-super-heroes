@@ -11,10 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.bson.types.ObjectId;
-import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import org.eclipse.microprofile.faulttolerance.Retry;
-import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.quarkus.logging.Log;
@@ -34,9 +30,6 @@ import io.quarkus.sample.superheroes.fight.client.VillainClient;
 import io.quarkus.sample.superheroes.fight.config.FightConfig;
 import io.quarkus.sample.superheroes.fight.mapping.FightMapper;
 
-import io.opentelemetry.instrumentation.annotations.SpanAttribute;
-import io.opentelemetry.instrumentation.annotations.WithSpan;
-import io.smallrye.faulttolerance.api.CircuitBreakerName;
 import io.smallrye.mutiny.Uni;
 
 /**
@@ -76,29 +69,22 @@ public class FightService {
 		       fighters;
 	}
 
-  @WithSpan("FightService.findAllFights")
 	public Uni<List<Fight>> findAllFights() {
     Log.debug("Getting all fights");
 		return Fight.listAll();
 	}
 
-  @WithSpan("FightService.findFightById")
-	public Uni<Fight> findFightById(@SpanAttribute("arg.id") String id) {
+	public Uni<Fight> findFightById(String id) {
     Log.debugf("Finding fight by id = %s", id);
 		return Fight.findById(new ObjectId(id));
 	}
 
-	@Timeout(value = 4, unit = ChronoUnit.SECONDS)
-  @Fallback(fallbackMethod = "fallbackRandomFighters")
-  @WithSpan("FightService.findRandomFighters")
 	public Uni<Fighters> findRandomFighters() {
     Log.debug("Finding random fighters");
 
-    var villain = findRandomVillain()
-      .onItem().ifNull().continueWith(this::createFallbackVillain);
+    var villain = findRandomVillain();
 
-		var hero = findRandomHero()
-      .onItem().ifNull().continueWith(this::createFallbackHero);
+		var hero = findRandomHero();
 
     return addDelay(
       Uni.combine()
@@ -108,176 +94,65 @@ public class FightService {
     );
 	}
 
-  @Timeout(value = 2, unit = ChronoUnit.SECONDS)
-  @Fallback(fallbackMethod = "fallbackRandomLocation")
   public Uni<FightLocation> findRandomLocation() {
     Log.debug("Finding a random location");
     return this.locationClient.findRandomLocation()
-      .onItem().ifNull().continueWith(this::createFallbackLocation)
       .invoke(location -> Log.debugf("Got random location: %s", location));
   }
 
-	@Timeout(value = 2, unit = ChronoUnit.SECONDS)
-	@Fallback(fallbackMethod = "fallbackRandomHero")
 	Uni<Hero> findRandomHero() {
     Log.debug("Finding a random hero");
 		return this.heroClient.findRandomHero()
 			.invoke(hero -> Log.debugf("Got random hero: %s", hero));
 	}
 
-	@Timeout(value = 2, unit = ChronoUnit.SECONDS)
-	@Fallback(fallbackMethod = "fallbackRandomVillain")
 	Uni<Villain> findRandomVillain() {
     Log.debug("Finding a random villain");
 		return this.villainClient.findRandomVillain()
 			.invoke(villain -> Log.debugf("Got random villain: %s", villain));
 	}
 
-  @Timeout(value = 5, unit = ChronoUnit.SECONDS)
-  @Fallback(fallbackMethod = "fallbackHelloHeroes")
-  @WithSpan("FightService.helloHeroes")
   public Uni<String> helloHeroes() {
     Log.debug("Pinging heroes service");
     return this.heroClient.helloHeroes()
       .invoke(hello -> Log.debugf("Got %s from the Heroes microservice", hello));
   }
 
-  @Timeout(value = 5, unit = ChronoUnit.SECONDS)
-  @Fallback(fallbackMethod = "fallbackHelloNarration")
-  @WithSpan("FightService.helloNarration")
   public Uni<String> helloNarration() {
     Log.debug("Pinging narration service");
     return this.narrationClient.hello()
       .invoke(hello -> Log.debugf("Got %s back from the Narration microservice", hello));
   }
 
-	@Timeout(value = 5, unit = ChronoUnit.SECONDS)
-	@Fallback(fallbackMethod = "fallbackHelloLocations")
-	@WithSpan("FightService.helloLocations")
 	public Uni<String> helloLocations() {
 		Log.debug("Pinging location service");
 		return this.locationClient.helloLocations()
 			.invoke(hello -> Log.debugf("Got %s back from the Locations microservice", hello));
 	}
 
-	Uni<String> fallbackHelloLocations() {
-		return Uni.createFrom().item("Could not invoke the Locations microservice")
-			.invoke(message -> Log.warn(message));
-	}
-
-  Uni<String> fallbackHelloNarration() {
-    return Uni.createFrom().item("Could not invoke the Narration microservice")
-      .invoke(message -> Log.warn(message));
-  }
-
-  Uni<Fighters> fallbackRandomFighters() {
-    return Uni.createFrom().item(new Fighters(createFallbackHero(), createFallbackVillain()))
-      .invoke(() -> Log.warn("Falling back on finding random fighters"));
-  }
-
-  Uni<String> fallbackHelloHeroes() {
-    return Uni.createFrom().item("Could not invoke the Heroes microservice")
-      .invoke(message -> Log.warn(message));
-  }
-
-  @Timeout(value = 5, unit = ChronoUnit.SECONDS)
-  @Fallback(fallbackMethod = "fallbackHelloVillains")
-  @WithSpan("FightService.helloVillains")
   public Uni<String> helloVillains() {
     Log.debug("Pinging villains service");
     return this.villainClient.helloVillains()
       .invoke(hello -> Log.debugf("Got %s from the Villains microservice", hello));
   }
 
-  Uni<String> fallbackHelloVillains() {
-    return Uni.createFrom().item("Could not invoke the Villains microservice")
-      .invoke(message -> Log.warn(message));
-  }
-
-	Uni<Hero> fallbackRandomHero() {
-		return Uni.createFrom().item(this::createFallbackHero)
-			.invoke(h -> Log.warn("Falling back on Hero"));
-	}
-
-	private Hero createFallbackHero() {
-		return new Hero(
-			this.fightConfig.hero().fallback().name(),
-			this.fightConfig.hero().fallback().level(),
-			this.fightConfig.hero().fallback().picture(),
-			this.fightConfig.hero().fallback().powers()
-		);
-	}
-
-	Uni<Villain> fallbackRandomVillain() {
-		return Uni.createFrom().item(this::createFallbackVillain)
-			.invoke(v -> Log.warn("Falling back on Villain"));
-	}
-
-  Uni<FightLocation> fallbackRandomLocation() {
-    return Uni.createFrom().item(this::createFallbackLocation)
-      .invoke(l -> Log.warn("Falling back on Location"));
-  }
-
-  private FightLocation createFallbackLocation() {
-    return new FightLocation(
-      this.fightConfig.location().fallback().name(),
-      this.fightConfig.location().fallback().description(),
-      this.fightConfig.location().fallback().picture()
-    );
-  }
-
-  Uni<String> fallbackNarrateFight(FightToNarrate fight) {
-    return Uni.createFrom().item(this.fightConfig.narration().fallbackNarration())
-      .invoke(n -> Log.warn("Falling back on Narration"));
-  }
-
-  Uni<FightImage> fallbackGenerateImageFromNarration(String narration) {
-    var fallbackImageGeneration = this.fightConfig.narration().fallbackImageGeneration();
-
-    return Uni.createFrom().item(new FightImage(fallbackImageGeneration.imageUrl(), fallbackImageGeneration.imageNarration()))
-      .invoke(i -> Log.warn("Falling back on narration image generation"));
-  }
-
-	private Villain createFallbackVillain() {
-		return new Villain(
-			this.fightConfig.villain().fallback().name(),
-			this.fightConfig.villain().fallback().level(),
-			this.fightConfig.villain().fallback().picture(),
-			this.fightConfig.villain().fallback().powers()
-		);
-	}
-
-  @WithSpan("FightService.performFight")
-	public Uni<Fight> performFight(@SpanAttribute("arg.fighters") @NotNull @Valid FightRequest fightRequest) {
+	public Uni<Fight> performFight(@NotNull @Valid FightRequest fightRequest) {
     Log.debugf("Performing a fight with fighters: %s", fightRequest);
     return determineWinner(fightRequest)
       .chain(this::persistFight);
   }
 
-  @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
-  @CircuitBreakerName("narrateFight")
-  @Timeout(value = 30, unit = ChronoUnit.SECONDS)
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
-	@Fallback(fallbackMethod = "fallbackNarrateFight")
-  @WithSpan("FightService.narrateFight")
-  public Uni<String> narrateFight(@SpanAttribute("arg.fight") FightToNarrate fight) {
+  public Uni<String> narrateFight(FightToNarrate fight) {
     Log.debugf("Narrating fight: %s", fight);
     return this.narrationClient.narrate(fight);
   }
 
-  @CircuitBreaker(requestVolumeThreshold = 8, failureRatio = 0.5, delay = 2, delayUnit = ChronoUnit.SECONDS)
-  @CircuitBreakerName("generateImageFromNarration")
-  @Timeout(value = 30, unit = ChronoUnit.SECONDS)
-  @Retry(maxRetries = 3, delay = 200, delayUnit = ChronoUnit.MILLIS)
-	@Fallback(fallbackMethod = "fallbackGenerateImageFromNarration")
-  @WithSpan("FightService.generateImageFromNarration")
-  public Uni<FightImage> generateImageFromNarration(@SpanAttribute("arg.narration") String narration) {
+  public Uni<FightImage> generateImageFromNarration(String narration) {
     Log.debugf("Generating image for narration: %s", narration);
     return this.narrationClient.generateImageFromNarration(narration);
   }
 
-  @WithSpan("FightService.persistFight")
-	Uni<Fight> persistFight(@SpanAttribute("arg.fight") Fight fight) {
+	Uni<Fight> persistFight(Fight fight) {
     Log.debugf("Persisting a fight: %s", fight);
 		return Fight.persist(fight)
       .replaceWith(fight)
@@ -285,7 +160,7 @@ public class FightService {
       .replaceWith(fight);
 	}
 
-	Uni<Fight> determineWinner(@SpanAttribute("arg.fighters") FightRequest fightRequest) {
+	Uni<Fight> determineWinner(FightRequest fightRequest) {
     Log.debugf("Determining winner between fighters: %s", fightRequest);
 
 		// Amazingly fancy logic to determine the winner...

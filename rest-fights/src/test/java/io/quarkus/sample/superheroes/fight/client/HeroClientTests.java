@@ -25,8 +25,6 @@ import io.quarkus.sample.superheroes.fight.InjectWireMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.smallrye.faulttolerance.api.CircuitBreakerMaintenance;
-import io.smallrye.faulttolerance.api.CircuitBreakerState;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 
 /**
@@ -61,18 +59,9 @@ class HeroClientTests {
   @Inject
   ObjectMapper objectMapper;
 
-  @Inject
-  CircuitBreakerMaintenance circuitBreakerMaintenance;
-
   @BeforeEach
   void beforeEach() {
     this.wireMockServer.resetAll();
-  }
-
-  @AfterEach
-  void afterEach() {
-    // Reset all circuit breaker counts after each test
-    this.circuitBreakerMaintenance.resetAll();
   }
 
   @Test
@@ -122,57 +111,6 @@ class HeroClientTests {
     );
   }
 
-  @Test
-  void doesntRecoverFrom500() {
-    this.wireMockServer.stubFor(
-      get(urlEqualTo(HERO_RANDOM_URI))
-        .willReturn(serverError())
-    );
-
-    // The way the circuit breaker works is that you have to fire at least requestVolumeThreshold
-    // requests at the breaker before it starts to trip
-    // This is so it can fill its window
-
-    // Circuit breaker should trip after 2 calls to findRandomHero
-    // 1 Call = 1 actual call + 3 fallbacks = 4 total calls
-    assertThat(this.circuitBreakerMaintenance.currentState("findRandomHero"))
-      .isEqualTo(CircuitBreakerState.CLOSED);
-
-    // First 2 calls (and 3 subsequent retries) should just fail with WebApplicationException
-    // While making actual calls to the service
-    IntStream.rangeClosed(1, 2)
-      .forEach(i ->
-        this.heroClient.findRandomHero()
-          .subscribe().withSubscriber(UniAssertSubscriber.create())
-          .assertSubscribed()
-          .awaitFailure(Duration.ofSeconds(5))
-          .assertFailedWith(WebApplicationException.class)
-      );
-
-    // Next call should trip the breaker
-    // The breaker should not make an actual call
-    var ex = this.heroClient.findRandomHero()
-      .subscribe().withSubscriber(UniAssertSubscriber.create())
-      .assertSubscribed()
-      .awaitFailure(Duration.ofSeconds(5))
-      .getFailure();
-
-    assertThat(ex)
-      .isNotNull()
-      .isExactlyInstanceOf(CircuitBreakerOpenException.class)
-      .hasMessageContainingAll("%s#findRandomHero".formatted(HeroClient.class.getName()), "circuit breaker is open");
-
-    // Verify that the breaker is open
-    assertThat(this.circuitBreakerMaintenance.currentState("findRandomHero"))
-      .isEqualTo(CircuitBreakerState.OPEN);
-
-    // Verify that the server only saw 8 actual requests
-    // (2 "real" requests and 3 retries each)
-    this.wireMockServer.verify(8,
-      getRequestedFor(urlEqualTo(HERO_RANDOM_URI))
-        .withHeader(ACCEPT, equalTo(APPLICATION_JSON))
-    );
-  }
 
   @Test
   void helloHeroes() {
