@@ -7,10 +7,6 @@ services:
     volumes:
       - ./k6:/k6:ro
       - ./k6/results:/results
-    deploy:
-      resources:
-        limits:
-          memory: 42M
 
   fights-db:
     image: mongo:7.0
