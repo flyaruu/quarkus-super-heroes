@@ -1,13 +1,4 @@
 services:
-  k6:
-    build: k6-image
-    environment:
-      K6_HOST: http://rest-fights:8082
-    command: ["bash", "-c", "while true; do sleep 3600; done"]
-    volumes:
-      - ./k6:/k6:ro
-      - ./k6/results:/results
-
   fights-db:
     image: mongo:7.0
     ports:
@@ -137,4 +128,3 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: locations
       QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: no-file
     restart: on-failure
-
